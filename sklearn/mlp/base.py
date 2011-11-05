@@ -38,7 +38,7 @@ class BaseMLP(BaseEstimator):
         n_iterations = int(max_epochs * n_batches)
 
         if shuffle_data:
-            X_shuffled = shuffle(X)
+            X_shuffled, y_shuffled = shuffle(X, y)
         # generate batch slices
         batch_slices = list(gen_even_slices(n_batches * self.chunk_size, n_batches))
 
@@ -58,7 +58,7 @@ class BaseMLP(BaseEstimator):
         # main loop
         for i, batch_slice in izip(xrange(n_iterations), cycle(batch_slices)):
             self._forward(i, X_shuffled, batch_slice, x_hidden, x_output)
-            self._backward(i, X_shuffled, y, batch_slice, x_hidden, x_output, delta_o, delta_h)
+            self._backward(i, X_shuffled, y_shuffled, batch_slice, x_hidden, x_output, delta_o, delta_h)
         return self
 
     def predict(self, X):
@@ -80,7 +80,7 @@ class BaseMLP(BaseEstimator):
 
     def _backward(self, i, X, y, batch_slice, x_hidden, x_output, delta_o, delta_h):
         """Do a backward pass through the network and update the weights"""
-        delta_o[:] = x_output - y[batch_slice] # TODO: copy?
+        delta_o[:] = y[batch_slice] - x_output# TODO: copy?
         #import ipdb
         #ipdb.set_trace()
         print(np.linalg.norm(delta_o/self.chunk_size))
@@ -89,9 +89,9 @@ class BaseMLP(BaseEstimator):
         delta_h[:] = np.dot(delta_o, self.weights2_.T)
 
         # update weights
-        self.weights2_ -= self.lr/self.chunk_size * np.dot(x_hidden.T, delta_o)
-        self.bias2_ -= self.lr * np.mean(delta_o, axis=0)
-        self.weights1_ -= self.lr/self.chunk_size * np.dot(X[batch_slice].T, delta_h)
-        self.bias1_ -= self.lr * np.mean(delta_h, axis=0)
+        self.weights2_ += self.lr/self.chunk_size * np.dot(x_hidden.T, delta_o)
+        self.bias2_ += self.lr * np.mean(delta_o, axis=0)
+        self.weights1_ += self.lr/self.chunk_size * np.dot(X[batch_slice].T, delta_h)
+        self.bias1_ += self.lr * np.mean(delta_h, axis=0)
 
 
