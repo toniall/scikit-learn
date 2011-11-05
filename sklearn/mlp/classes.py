@@ -22,4 +22,4 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
     MLPRegressor
 
     References
-    ----------
+    ----------"""
