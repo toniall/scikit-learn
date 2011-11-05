@@ -7,6 +7,12 @@ from ..utils import gen_even_slices
 from ..base import BaseEstimator
 from ..utils import shuffle
 
+def softmax_(x):
+    #import ipdb
+    #ipdb.set_trace()
+    np.exp(x,x)
+    x /= np.sum(x, axis=1)[:, np.newaxis]
+
 class BaseMLP(BaseEstimator):
     """Base class for estimators base on multi layer
     perceptrons."""
@@ -38,8 +44,10 @@ class BaseMLP(BaseEstimator):
 
         # generate weights.
         # TODO: smart initialization
-        self.weights1_ = np.random.normal(0.1, size=(n_features, self.n_hidden))
-        self.weights2_ = np.random.normal(0.1, size=(self.n_hidden, self.n_outs))
+        self.weights1_ = np.random.uniform(size=(n_features, self.n_hidden))/np.sqrt(n_features)
+        self.bias1_ = np.zeros(self.n_hidden)
+        self.weights2_ = np.random.uniform(size=(self.n_hidden, self.n_outs))/np.sqrt(self.n_hidden)
+        self.bias2_ = np.zeros(self.n_outs)
 
         # preallocate memory
         x_hidden = np.empty((self.chunk_size, self.n_hidden))
@@ -63,20 +71,27 @@ class BaseMLP(BaseEstimator):
     def _forward(self, i, X, batch_slice, x_hidden, x_output):
         """Do a forward pass through the network"""
         x_hidden[:] = np.dot(X[batch_slice], self.weights1_)
+        x_hidden += self.bias1_
         np.tanh(x_hidden, x_hidden)
         x_output[:] = np.dot(x_hidden, self.weights2_)
-        np.tanh(x_output, x_output)
+        x_output += self.bias2_
+        softmax_(x_output)
+        #np.tanh(x_output, x_output)
 
     def _backward(self, i, X, y, batch_slice, x_hidden, x_output, delta_o, delta_h):
+        """Do a backward pass through the network and update the weights"""
         delta_o[:] = x_output - y[batch_slice] # TODO: copy?
-        print(np.linalg.norm(delta_o))
-        delta_o *= 1. - x_output**2
-        delta_h[:] = np.dot(delta_o, self.weights2_.T)
         #import ipdb
         #ipdb.set_trace()
+        print(np.linalg.norm(delta_o/self.chunk_size))
+        #delta_o *= 1. - x_output**2
+        delta_o *= x_output
+        delta_h[:] = np.dot(delta_o, self.weights2_.T)
 
         # update weights
-        self.weights2_ -= self.lr * np.dot(x_hidden.T, delta_o)
-        self.weights1_ -= self.lr * np.dot(X[batch_slice].T, delta_h)
+        self.weights2_ -= self.lr/self.chunk_size * np.dot(x_hidden.T, delta_o)
+        self.bias2_ -= self.lr * np.mean(delta_o, axis=0)
+        self.weights1_ -= self.lr/self.chunk_size * np.dot(X[batch_slice].T, delta_h)
+        self.bias1_ -= self.lr * np.mean(delta_h, axis=0)
 
 
