@@ -24,7 +24,37 @@ class BaseMLP(BaseEstimator):
         self.loss = loss
         self.chunk_size = chunk_size
 
-    def fit(self, X, y, max_epochs, shuffle_data):
+        # check compatibility of loss and output layer:
+        if output_layer=='softmax' and loss!='cross_entropy':
+            raise ValueError('Softmax output is only supported '+
+                'with cross entropy loss function.')
+        if output_layer!='softmax' and loss=='cross_entropy':
+            raise ValueError('Cross-entropy loss is only ' +
+                    'supported with softmax output layer.')
+
+        # set output layer and loss function
+        if output_layer=='linear':
+            self.output_func = id
+        elif output_layer=='softmax':
+            self.output_func = softmax
+        elif output_layer=='tanh':
+            self.output_func = np.tanh
+        else:
+            raise ValueError("'output_layer' must be one of "+
+                    "'linear', 'softmax' or 'tanh'.")
+
+        if loss=='cross-entropy':
+            self.loss 
+            pass
+        elif loss=='square':
+            pass
+        elif loss=='hinge':
+            pass
+        else:
+            raise ValueError("'loss' must be one of " +
+                    "'cross-entropy', 'square' or 'hinge'.")
+
+    def fit(self, X, y, max_epochs, shuffle_data, verbose=0):
         # get all sizes
         n_samples, n_features = X.shape
         if y.shape[0] != n_samples:
@@ -80,12 +110,10 @@ class BaseMLP(BaseEstimator):
 
     def _backward(self, i, X, y, batch_slice, x_hidden, x_output, delta_o, delta_h):
         """Do a backward pass through the network and update the weights"""
-        delta_o[:] = y[batch_slice] - x_output# TODO: copy?
-        #import ipdb
-        #ipdb.set_trace()
-        print(np.linalg.norm(delta_o/self.chunk_size))
-        #delta_o *= 1. - x_output**2
-        delta_o *= x_output
+        #delta_o[:] = self.loss(y[batch_slice], x_output)
+        delta_o[:] = y[batch_slice] - x_output
+        if verbose>0:
+            print(np.linalg.norm(delta_o/self.chunk_size))
         delta_h[:] = np.dot(delta_o, self.weights2_.T)
 
         # update weights
