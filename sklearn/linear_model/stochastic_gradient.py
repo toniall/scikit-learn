@@ -7,7 +7,7 @@ import numpy as np
 
 from ..externals.joblib import Parallel, delayed
 from .base import BaseSGDClassifier, BaseSGDRegressor
-from .sgd_fast import plain_sgd
+from .sgd_fast import plain_sgd, sgd_multinomial
 
 
 class SGDClassifier(BaseSGDClassifier):
@@ -197,6 +197,63 @@ def _train_ova_classifier(i, c, X, y, coef_, intercept_, loss_function,
                                 sample_weight, learning_rate, eta0,
                                 power_t)
     return (i, coef, intercept)
+
+class SGDClassifierCS(BaseSGDClassifier):
+    #def _fit_binary(self, X, y):
+        #"""Fit a single binary classifier"""
+        ## interprete X as dense array
+        #X = np.asarray(X, dtype=np.float64, order='C')
+
+        ## encode original class labels as 1 (classes[1]) or -1 (classes[0]).
+        #y_new = np.ones(y.shape, dtype=np.float64, order='C') * -1.0
+        #y_new[y == self.classes[1]] = 1.0
+        #y = y_new
+
+        #coef_, intercept_ = plain_sgd(self.coef_,
+                                      #self.intercept_,
+                                      #self.loss_function,
+                                      #self.penalty_type,
+                                      #self.alpha, self.rho,
+                                      #X, y,
+                                      #self.n_iter,
+                                      #int(self.fit_intercept),
+                                      #int(self.verbose),
+                                      #int(self.shuffle),
+                                      #self.seed,
+                                      #self._expanded_class_weight[1],
+                                      #self._expanded_class_weight[0],
+                                      #self.sample_weight,
+                                      #self.learning_rate_code, self.eta0,
+                                      #self.power_t)
+
+        #self._set_coef(coef_)
+        #self.intercept_ = np.asarray(intercept_)
+
+    def _fit_multiclass(self, X, y):
+        """Fit a multi-class classifier by combining binary classifiers
+
+        Each binary classifier predicts one class versus all others. This
+        strategy is called OVA: One Versus All.
+        """
+        X = np.asarray(X, dtype=np.float64, order='C')
+
+        coef_, intercept_ = sgd_multinomial(self.coef_,
+                                               self.intercept_,
+                                               self.loss_function,
+                                               self.penalty_type, self.alpha,
+                                               self.rho, self.n_iter,
+                                               self.fit_intercept,
+                                               self.verbose, self.shuffle,
+                                               self.seed,
+                                               self._expanded_class_weight,
+                                               self.sample_weight,
+                                               self.learning_rate_code,
+                                               self.eta0, self.power_t)
+
+        import pdb
+        pdb.set_trace()
+        self._set_coef(coef_)
+        self.intercept_ = np.asarray(intercept_)
 
 
 class SGDRegressor(BaseSGDRegressor):

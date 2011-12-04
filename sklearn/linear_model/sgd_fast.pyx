@@ -133,6 +133,34 @@ cdef class Hinge(Classification):
     def __reduce__(self):
         return Hinge, ()
 
+cdef class CrammerSinger:
+    """SVM loss for multiclass classification tasks with y in {0, n}"""
+    def __init__(self, m):
+        self.i = 0
+    cdef double loss(self, np.ndarray[np.float64_t, ndim=1, mode='c'] p, int y):
+        cdef double s = p[y]
+        cdef double m = -np.inf
+        cdef int mi = 0
+        cdef int i
+        for i in xrange(p.dim[0]):
+            if i != y:
+                if p[i] > m:
+                    mi = i
+                    m = p[i]
+        if m > s - 1:
+            self.i = i
+            return m + 1 - s
+        self.i = y
+        return 0.0
+
+    #cdef double dloss(self, self,np.ndarray[np.float64_t, ndim=1, mode='c'] p, double y):
+        #cdef double z = p * y
+        #if z < 1.0:
+            #return -y
+        #return 0.0
+
+    #def __reduce__(self):
+        #return Hinge, ()
 
 cdef class Log(Classification):
     """Logistic regression loss for binary classification with y in {-1, 1}"""
@@ -419,9 +447,218 @@ cdef double dot(double *w_data_ptr, double *X_data_ptr,
         sum += w_data_ptr[j] * X_data_ptr[offset + j]
     return sum
 
+def sgd_multinomial(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
+              double intercept,
+              LossFunction loss,
+              int penalty_type,
+              double alpha, double rho,
+              np.ndarray[np.float64_t, ndim=2, mode='c'] X,
+              np.ndarray[np.int64_t, ndim=1, mode='c'] Y,
+              int n_iter, int fit_intercept,
+              int verbose, int shuffle, int seed,
+              double weight_pos, double weight_neg,
+              np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight,
+              int learning_rate, double eta0,
+              double power_t):
+    #"""Cython impl. of SGD for generic loss functions and penalties
+    """Cython impl. of SGD for Crammer-Singer loss functions and penalties
+
+    This implementation assumes X represented as a dense array of floats.
+
+    Parameters
+    ----------
+    w : ndarray[double, ndim=1]
+        The allocated coef_ vector.
+    intercept : double
+        The initial intercept
+    loss : LossFunction
+        A concrete LossFunction object.
+    penalty_type : int
+        The penalty 2 for L2, 1 for L1, and 3 for Elastic-Net.
+    alpha : float
+        The regularization parameter.
+    rho : float
+        The elastic net hyperparameter.
+    X : ndarray[double, ndim=2]
+        The dataset as a dense numpy array.
+    Y : ndarray[double, ndim=1]
+        The labels.
+    n_iter : int
+        The number of iterations (epochs).
+    fit_intercept : int
+        Whether or not to fit the intercept (1 or 0).
+    verbose : int
+        Print verbose output; 0 for quite.
+    shuffle : int
+        Whether to shuffle the training data before each epoch.
+    weight_pos : float
+        The weight of the positive class.
+    weight_neg : float
+        The weight of the negative class.
+    seed : int
+        The seed of the pseudo random number generator to use when
+        shuffling the data
+    sample_weight : array, shape = [n_samples]
+        The importance weight of each sample.
+    learning_rate : int
+        The learning rate:
+        (1) constant, eta = eta0
+        (2) optimal, eta = 1.0/(t+t0)
+        (3) inverse scaling, eta = eta0 / pow(t, power_t)
+    eta0 : double
+        The initial learning rate.
+    power_t : double
+        The exponent for inverse scaling learning rate.
+
+    Returns
+    -------
+    w : array, shape [n_features]
+        The fitted weight vector.
+    intercept : float
+        The fitted intercept term.
+
+    """
+
+    # get the data information into easy vars
+    cdef unsigned int n_samples = Y.shape[0]
+    cdef unsigned int n_features = w.shape[1]
+
+    # Array stride to get to next sample
+    cdef int stride = X.strides[0] / X.strides[1]
+
+    cdef double *w_data_ptr = <double *>w.data
+    cdef double *X_data_ptr = <double *>X.data
+    cdef long int *Y_data_ptr = <long int *>Y.data
+
+    cdef double *sample_weight_data = <double *>sample_weight.data
+
+    # Use index array for fast shuffling
+    cdef np.ndarray[np.int32_t, ndim=1,
+                    mode="c"] index = np.arange(n_samples,
+                                                dtype=np.int32)
+    cdef int *index_data_ptr = <int *>index.data
+
+    # helper variable
+    cdef unsigned int offset = 0
+    cdef double wscale = 1.0
+    cdef double eta = 0.0
+    cdef double p = 0.0
+    cdef double update = 0.0
+    cdef double sumloss = 0.0
+    cdef double wnorm = 0.0
+    cdef double t = 0.0
+    cdef int y = -1
+    cdef double class_weight = 1.0
+    cdef unsigned int count = 0
+    cdef unsigned int epoch = 0
+    cdef unsigned int i = 0
+    cdef int sample_idx = 0
+
+    # q vector is only used for L1 regularization
+    cdef np.ndarray[np.float64_t, ndim=1, mode="c"] q = None
+    cdef double *q_data_ptr = NULL
+    if penalty_type != L2:
+        q = np.zeros((n_features,), dtype=np.float64, order="c")
+        q_data_ptr = <double *> q.data
+    cdef double u = 0.0
+
+    if penalty_type == L2:
+        rho = 1.0
+    elif penalty_type == L1:
+        rho = 0.0
+
+    cdef double typw = sqrt(1.0 / sqrt(alpha))
+
+    if learning_rate == OPTIMAL:
+        # computing eta0, the initial learning rate
+        #eta0 = typw / max(1.0, loss.dloss(-typw, 1.0)) TODO
+        eta0 = typw / 1.0
+    else:
+        eta = eta0
+
+    if learning_rate == OPTIMAL:
+        # initialize t such that eta at first example equals eta0
+        t = 1.0 / (eta0 * alpha)
+    else:
+        t = 1.0
+
+    t_start = time()
+    for epoch in xrange(n_iter):
+        if verbose > 0:
+            print("-- Epoch %d" % (epoch + 1))
+        if shuffle:
+            np.random.RandomState(seed).shuffle(index)
+        for i in xrange(n_samples):
+            sample_idx = index_data_ptr[i]
+
+            # row offset in elem
+            offset = sample_idx * stride
+            y = Y_data_ptr[sample_idx]
+            if learning_rate == OPTIMAL:
+                eta = 1.0 / (alpha * t)
+            elif learning_rate == INVSCALING:
+                eta = eta0 / pow(t, power_t)
+            p = (dot(w_data_ptr, X_data_ptr, offset, n_features) * wscale
+                ) + intercept
+            sumloss += loss.loss(p, y)
+            if y > 0:
+                class_weight = weight_pos
+            else:
+                class_weight = weight_neg
+            if loss.i != y:
+                update = eta * class_weight * \
+                    sample_weight_data[sample_idx]
+                add_part(w_data_ptr, wscale, X_data_ptr, offset, n_features, -update, y * n_features)
+                add_part(w_data_ptr, wscale, X_data_ptr, offset, n_features, update, loss.i * n_features)
+                if fit_intercept == 1:
+                    intercept -= update  # TODO
+            if penalty_type != L1:
+                wscale *= (1.0 - (rho * eta * alpha))
+                if wscale < 1e-9:
+                    w *= wscale
+                    wscale = 1.0
+            if penalty_type == L1 or penalty_type == ELASTICNET:
+                u += ((1.0 - rho) * eta * alpha)
+                l1penalty(w_data_ptr, wscale, q_data_ptr, n_features, u)
+            t += 1
+            count += 1
+
+        # report epoch information
+        if verbose > 0:
+            wnorm = sqrt(np.dot(w, w) * wscale * wscale)
+            print("Norm: %.2f, NNZs: %d, "\
+            "Bias: %.6f, T: %d, Avg. loss: %.6f" % (wnorm,
+                                                    w.nonzero()[0].shape[0],
+                                                    intercept, count,
+                                                    sumloss / count))
+            print("Total training time: %.2f seconds." % (time() - t_start))
+
+        # floating-point under-/overflow check.
+        if np.any(np.isinf(w)) or np.any(np.isnan(w)) \
+           or np.isnan(intercept) or np.isinf(intercept):
+            raise ValueError("floating-point under-/overflow occured.")
+
+    w *= wscale
+    return w, intercept
 
 cdef double add(double *w_data_ptr, double wscale, double *X_data_ptr,
                 unsigned int offset, unsigned int n_features, double c):
+    """Scales example x by constant c and adds it to the weight vector w"""
+    cdef unsigned j
+    cdef double val
+    cdef double innerprod = 0.0
+    cdef double xsqnorm = 0.0
+    for j in xrange(n_features):
+        val = X_data_ptr[offset + j]
+        innerprod += (w_data_ptr[j] * val)
+        xsqnorm += (val * val)
+        w_data_ptr[j] += val * (c / wscale)
+
+    # TODO this is needed for PEGASOS only
+    return (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
+
+cdef double add_part(double *w_data_ptr, double wscale, double *X_data_ptr,
+        unsigned int offset, unsigned int n_features, double c, int w_offset):
     """Scales example x by constant c and adds it to the weight vector w"""
     cdef unsigned j
     cdef double val
