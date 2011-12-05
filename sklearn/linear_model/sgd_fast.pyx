@@ -135,9 +135,10 @@ cdef class Hinge(Classification):
 
 cdef class CrammerSinger:
     """SVM loss for multiclass classification tasks with y in {0, n}"""
-    def __init__(self, m):
+    cdef int i
+    def __init__(self):
         self.i = 0
-    cdef double loss(self, np.ndarray[np.float64_t, ndim=1, mode='c'] p, int y):
+    cpdef double loss(self, np.ndarray[np.float64_t, ndim=1, mode='c'] p, int y):
         cdef double s = p[y]
         cdef double m = -np.inf
         cdef int mi = 0
@@ -447,9 +448,9 @@ cdef double dot(double *w_data_ptr, double *X_data_ptr,
         sum += w_data_ptr[j] * X_data_ptr[offset + j]
     return sum
 
-def sgd_multinomial(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
-              double intercept,
-              LossFunction loss,
+def sgd_multinomial(np.ndarray[np.float64_t, ndim=2, mode='c'] w,
+              np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
+              CrammerSinger loss,
               int penalty_type,
               double alpha, double rho,
               np.ndarray[np.float64_t, ndim=2, mode='c'] X,
@@ -528,7 +529,7 @@ def sgd_multinomial(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
 
     cdef double *w_data_ptr = <double *>w.data
     cdef double *X_data_ptr = <double *>X.data
-    cdef long int *Y_data_ptr = <long int *>Y.data
+    cdef int *Y_data_ptr = <int *>Y.data
 
     cdef double *sample_weight_data = <double *>sample_weight.data
 
@@ -542,7 +543,6 @@ def sgd_multinomial(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
     cdef unsigned int offset = 0
     cdef double wscale = 1.0
     cdef double eta = 0.0
-    cdef double p = 0.0
     cdef double update = 0.0
     cdef double sumloss = 0.0
     cdef double wnorm = 0.0
@@ -598,8 +598,9 @@ def sgd_multinomial(np.ndarray[np.float64_t, ndim=1, mode='c'] w,
                 eta = 1.0 / (alpha * t)
             elif learning_rate == INVSCALING:
                 eta = eta0 / pow(t, power_t)
-            p = (dot(w_data_ptr, X_data_ptr, offset, n_features) * wscale
-                ) + intercept
+            #p = (dot(w_data_ptr, X_data_ptr, offset, n_features) * wscale
+                #) + intercept
+            p = np.dot(X, w.T) * wscale + intercept
             sumloss += loss.loss(p, y)
             if y > 0:
                 class_weight = weight_pos

@@ -20,7 +20,7 @@ from .least_angle import Lars, LassoLars, lars_path, LARS, LassoLARS, \
                 LarsCV, LassoLarsCV, LassoLarsIC
 from .coordinate_descent import Lasso, ElasticNet, LassoCV, ElasticNetCV, \
                                 lasso_path, enet_path
-from .stochastic_gradient import SGDClassifier, SGDRegressor
+from .stochastic_gradient import SGDClassifier, SGDRegressor, SGDClassifierCS
 from .ridge import Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV, \
                    ridge_regression
 from .logistic import LogisticRegression

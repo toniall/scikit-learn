@@ -7,7 +7,7 @@ import numpy as np
 
 from ..externals.joblib import Parallel, delayed
 from .base import BaseSGDClassifier, BaseSGDRegressor
-from .sgd_fast import plain_sgd, sgd_multinomial
+from .sgd_fast import plain_sgd, sgd_multinomial, CrammerSinger
 
 
 class SGDClassifier(BaseSGDClassifier):
@@ -236,19 +236,24 @@ class SGDClassifierCS(BaseSGDClassifier):
         strategy is called OVA: One Versus All.
         """
         X = np.asarray(X, dtype=np.float64, order='C')
+        y = np.asarray(y, dtype=np.int64, order='C')
 
         coef_, intercept_ = sgd_multinomial(self.coef_,
-                                               self.intercept_,
-                                               self.loss_function,
-                                               self.penalty_type, self.alpha,
-                                               self.rho, self.n_iter,
-                                               self.fit_intercept,
-                                               self.verbose, self.shuffle,
-                                               self.seed,
-                                               self._expanded_class_weight,
-                                               self.sample_weight,
-                                               self.learning_rate_code,
-                                               self.eta0, self.power_t)
+                                      self.intercept_,
+                                      CrammerSinger(),
+                                      self.penalty_type,
+                                      self.alpha, self.rho,
+                                      X, y,
+                                      self.n_iter,
+                                      int(self.fit_intercept),
+                                      int(self.verbose),
+                                      int(self.shuffle),
+                                      self.seed,
+                                      self._expanded_class_weight[1],
+                                      self._expanded_class_weight[0],
+                                      self.sample_weight,
+                                      self.learning_rate_code, self.eta0,
+                                      self.power_t)
 
         import pdb
         pdb.set_trace()
