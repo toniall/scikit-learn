@@ -143,7 +143,7 @@ cdef class CrammerSinger:
         cdef double m = -np.inf
         cdef int mi = 0
         cdef int i
-        for i in xrange(p.dim[0]):
+        for i in xrange(len(p)):
             if i != y:
                 if p[i] > m:
                     mi = i
@@ -600,7 +600,7 @@ def sgd_multinomial(np.ndarray[np.float64_t, ndim=2, mode='c'] w,
                 eta = eta0 / pow(t, power_t)
             #p = (dot(w_data_ptr, X_data_ptr, offset, n_features) * wscale
                 #) + intercept
-            p = np.dot(X, w.T) * wscale + intercept
+            p = np.dot(X[i, :], w.T) * wscale + intercept
             sumloss += loss.loss(p, y)
             if y > 0:
                 class_weight = weight_pos
@@ -609,8 +609,8 @@ def sgd_multinomial(np.ndarray[np.float64_t, ndim=2, mode='c'] w,
             if loss.i != y:
                 update = eta * class_weight * \
                     sample_weight_data[sample_idx]
-                add_part(w_data_ptr, wscale, X_data_ptr, offset, n_features, -update, y * n_features)
-                add_part(w_data_ptr, wscale, X_data_ptr, offset, n_features, update, loss.i * n_features)
+                add_part(w_data_ptr, wscale, X_data_ptr, offset, n_features, update, y * n_features)
+                add_part(w_data_ptr, wscale, X_data_ptr, offset, n_features, -update, loss.i * n_features)
                 if fit_intercept == 1:
                     intercept -= update  # TODO
             if penalty_type != L1:
@@ -626,17 +626,17 @@ def sgd_multinomial(np.ndarray[np.float64_t, ndim=2, mode='c'] w,
 
         # report epoch information
         if verbose > 0:
-            wnorm = sqrt(np.dot(w, w) * wscale * wscale)
+            wnorm = sqrt(np.dot(w.ravel(), w.ravel()) * wscale * wscale)
             print("Norm: %.2f, NNZs: %d, "\
             "Bias: %.6f, T: %d, Avg. loss: %.6f" % (wnorm,
                                                     w.nonzero()[0].shape[0],
-                                                    intercept, count,
+                                                    np.mean(intercept), count,
                                                     sumloss / count))
             print("Total training time: %.2f seconds." % (time() - t_start))
 
         # floating-point under-/overflow check.
         if np.any(np.isinf(w)) or np.any(np.isnan(w)) \
-           or np.isnan(intercept) or np.isinf(intercept):
+           or np.any(np.isnan(intercept)) or np.any(np.isinf(intercept)):
             raise ValueError("floating-point under-/overflow occured.")
 
     w *= wscale
@@ -667,9 +667,9 @@ cdef double add_part(double *w_data_ptr, double wscale, double *X_data_ptr,
     cdef double xsqnorm = 0.0
     for j in xrange(n_features):
         val = X_data_ptr[offset + j]
-        innerprod += (w_data_ptr[j] * val)
+        innerprod += (w_data_ptr[w_offset + j] * val)
         xsqnorm += (val * val)
-        w_data_ptr[j] += val * (c / wscale)
+        w_data_ptr[w_offset + j] += val * (c / wscale)
 
     # TODO this is needed for PEGASOS only
     return (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
