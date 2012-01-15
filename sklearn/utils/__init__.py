@@ -299,5 +299,20 @@ def gen_even_slices(n, n_packs):
             start = end
 
 
+def map_classes_safe(Y):
+    """Map unique items in y to numeric classes.
+    Works with y being a list of tuples for multi-label
+    classification"""
+    if isinstance(Y[0], list):
+        # multi-label setting:
+        classes = np.unique([y for l in Y for y in l])
+        Y_numeric = [tuple(np.searchsorted(classes, l)) for l in Y]
+    else:
+        classes = np.unique(Y)
+        Y_numeric = np.searchsorted(classes, Y)
+
+    return Y_numeric, classes
+
+
 class ConvergenceWarning(Warning):
     "Custom warning to capture convergence problems"
