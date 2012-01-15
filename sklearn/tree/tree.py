@@ -15,7 +15,7 @@ import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
-from ..utils import array2d, check_random_state
+from ..utils import array2d, check_random_state, map_classes_safe
 
 from . import _tree
 
@@ -298,12 +298,13 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
             feature = -1
 
         # Value at this node
-        current_y = y[sample_mask]
+        #current_y = y[sample_mask]
+        current_y = tuple([y[i] for i in np.arange(len(y))[sample_mask]])
 
         if is_classification:
             value = np.zeros((n_classes,))
-            t = current_y.max() + 1
-            value[:t] = np.bincount(current_y.astype(np.int))
+            t = np.max(current_y) + 1
+            value[:t] = np.bincount(np.array(current_y).astype(np.int))
 
         else:
             value = np.asarray(np.mean(current_y))
@@ -346,8 +347,8 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
     if X.dtype != DTYPE or not np.isfortran(X):
         X = np.asanyarray(X, dtype=DTYPE, order="F")
 
-    if y.dtype != DTYPE or not y.flags.contiguous:
-        y = np.ascontiguousarray(y, dtype=DTYPE)
+    #if y.dtype != DTYPE or not y.flags.contiguous:
+        #y = np.ascontiguousarray(y, dtype=DTYPE)
 
     if sample_mask is None:
         sample_mask = np.ones((X.shape[0],), dtype=np.bool)
@@ -415,10 +416,9 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         is_classification = isinstance(self, ClassifierMixin)
 
         if is_classification:
-            self.classes_ = np.unique(y)
+            y, self.classes_ = map_classes_safe(y)
             self.n_classes_ = self.classes_.shape[0]
             criterion = CLASSIFICATION[self.criterion](self.n_classes_)
-            y = np.searchsorted(self.classes_, y)
 
         else:
             self.classes_ = None
@@ -468,7 +468,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             raise ValueError("max_features must be in (0, n_features]")
 
         # Build tree
-        self.tree_ = _build_tree(X, y, is_classification, criterion,
+        self.tree_ = _build_tree(X, tuple(y), is_classification, criterion,
                                 max_depth, self.min_split,
                                 self.min_density, max_features,
                                 self.random_state, self.n_classes_,
