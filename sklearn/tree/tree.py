@@ -18,8 +18,6 @@ from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, check_random_state, map_classes_safe
 
 from . import _tree
-from IPython.core.debugger import Tracer
-tracer = Tracer(colors="LightBG")
 
 __all__ = ["DecisionTreeClassifier",
            "DecisionTreeRegressor",
@@ -426,11 +424,13 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         n_samples, self.n_features_ = X.shape
 
         is_classification = isinstance(self, ClassifierMixin)
+        self.multi_label_ = False
 
         if is_classification:
             y, self.classes_ = map_classes_safe(y)
             if isinstance(y[0], tuple):
                 self.criterion = "multi_label_gini"
+                self.multi_label_ = True
             self.n_classes_ = self.classes_.shape[0]
             criterion = CLASSIFICATION[self.criterion](self.n_classes_)
 
@@ -511,7 +511,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         return self
 
-    def predict(self, X, multi_label=False):
+    def predict(self, X):
         """Predict class or regression target for X.
 
         For a classification model, the predicted class for each sample in X is
@@ -541,7 +541,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                              % (self.n_features_, n_features))
 
         if isinstance(self, ClassifierMixin):
-            if multi_label:
+            if self.multi_label_:
                 predictions = self.tree_.predict(X, multi_label=True)
                 labels = np.arange(predictions.shape[1])
                 predictions = [tuple(labels[l > .5]) for l in predictions]
@@ -663,7 +663,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                                                      compute_importances,
                                                      random_state)
 
-    def predict_proba(self, X, multi_label=False):
+    def predict_proba(self, X):
         """Predict class probabilities of the input samples X.
 
         Parameters
@@ -689,8 +689,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        P = self.tree_.predict(X, multi_label)
-        if multi_label:
+        P = self.tree_.predict(X, self.multi_label_)
+        if self.multi_label_:
             return P
         P /= P.sum(axis=1)[:, np.newaxis]
         return P
