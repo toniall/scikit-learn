@@ -81,16 +81,16 @@ def _parallel_build_trees(n_trees, forest, X, y,
     return trees
 
 
-def _parallel_predict_proba(trees, X, n_classes):
+def _parallel_predict_proba(trees, X, n_classes, multi_label):
     """Private function used to compute a batch of predictions within a job."""
     p = np.zeros((X.shape[0], n_classes))
 
     for tree in trees:
         if n_classes == tree.n_classes_:
-            p += tree.predict_proba(X)
+            p += tree.predict_proba(X, multi_label)
 
         else:
-            proba = tree.predict_proba(X)
+            proba = tree.predict_proba(X, multi_label)
 
             for j, c in enumerate(tree.classes_):
                 p[:, c] += proba[:, j]
@@ -235,7 +235,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             n_jobs=n_jobs,
             random_state=random_state)
 
-    def predict(self, X):
+    def predict(self, X, multi_label=False):
         """Predict class for X.
 
         The predicted class of an input sample is computed as the majority
@@ -252,9 +252,9 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             The predicted classes.
         """
         return self.classes_.take(
-            np.argmax(self.predict_proba(X), axis=1),  axis=0)
+            np.argmax(self.predict_proba(X, multi_label), axis=1),  axis=0)
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, multi_label=False):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
@@ -281,7 +281,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         all_p = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_predict_proba)(
                 self.estimators_[starts[i]:starts[i + 1]],
-                X, self.n_classes_)
+                X, self.n_classes_, multi_label)
             for i in xrange(n_jobs))
 
         # Reduce
