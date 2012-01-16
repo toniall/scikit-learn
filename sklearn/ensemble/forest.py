@@ -41,7 +41,7 @@ from ..externals.joblib import Parallel, delayed, cpu_count
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
-from ..utils import check_random_state
+from ..utils import check_random_state, map_classes_safe
 
 from .base import BaseEnsemble
 
@@ -69,7 +69,7 @@ def _parallel_build_trees(n_trees, forest, X, y,
         if forest.bootstrap:
             n_samples = X.shape[0]
             indices = random_state.randint(0, n_samples, n_samples)
-            tree.fit(X[indices], y[indices],
+            tree.fit(X[indices], [y[i] for i in indices],
                      sample_mask=sample_mask, X_argsorted=X_argsorted)
 
         else:
@@ -182,9 +182,9 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 np.argsort(X.T, axis=1).astype(np.int32).T)
 
         if isinstance(self.base_estimator, ClassifierMixin):
-            self.classes_ = np.unique(y)
+
+            y, self.classes_ = map_classes_safe(y)
             self.n_classes_ = len(self.classes_)
-            y = np.searchsorted(self.classes_, y)
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, _ = _partition_trees(self)
@@ -235,7 +235,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             n_jobs=n_jobs,
             random_state=random_state)
 
-    def predict(self, X, multi_label=False):
+    def predict(self, X):
         """Predict class for X.
 
         The predicted class of an input sample is computed as the majority
@@ -251,10 +251,14 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         y : array of shape = [n_samples]
             The predicted classes.
         """
-        return self.classes_.take(
-            np.argmax(self.predict_proba(X, multi_label), axis=1),  axis=0)
+        if self.estimators_[0].multi_label_:
+            predictions = [tuple(self.classes_[l > .5]) for l in self.predict_proba(X)]
+        else:
+            predictions = self.classes_.take(np.argmax(self.predict_proba(X),
+                axis=1), axis=0)
+        return predictions
 
-    def predict_proba(self, X, multi_label=False):
+    def predict_proba(self, X):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
@@ -281,7 +285,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         all_p = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_predict_proba)(
                 self.estimators_[starts[i]:starts[i + 1]],
-                X, self.n_classes_, multi_label)
+                X, self.n_classes_)
             for i in xrange(n_jobs))
 
         # Reduce
