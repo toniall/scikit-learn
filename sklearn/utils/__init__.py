@@ -302,7 +302,7 @@ def map_classes_safe(Y):
     """Map unique items in y to numeric classes.
     Works with y being a list of tuples for multi-label
     classification"""
-    if isinstance(Y[0], list):
+    if isinstance(Y[0], tuple):
         # multi-label setting:
         classes = np.unique([y for l in Y for y in l])
         Y_numeric = [tuple(np.searchsorted(classes, l)) for l in Y]
