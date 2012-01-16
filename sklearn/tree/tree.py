@@ -543,8 +543,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         if isinstance(self, ClassifierMixin):
             if self.multi_label_:
                 predictions = self.tree_.predict(X, multi_label=True)
-                labels = np.arange(predictions.shape[1])
-                predictions = [tuple(labels[l > .5]) for l in predictions]
+                predictions = [tuple(self.classes_[l > .5]) for l in predictions]
             else:
                 predictions = self.classes_.take(np.argmax(
                     self.tree_.predict(X), axis=1), axis=0)
