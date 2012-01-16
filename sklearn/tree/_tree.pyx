@@ -179,6 +179,78 @@ cdef class ClassificationCriterion(Criterion):
         pass
 
 
+cdef class MultiLabelClassificationCriterion(ClassificationCriterion):
+    """Abstract criterion for multi label classification."""
+    cdef void init(self, tuple y, BOOL_t *sample_mask, int n_samples,
+                   int n_total_samples):
+        """Initialise the criterion class."""
+        cdef int c = 0
+        cdef int j = 0
+
+        self.n_samples = n_samples
+
+        for c from 0 <= c < self.n_classes:
+            self.label_count_init[c] = 0
+
+        for j from 0 <= j < n_total_samples:
+            if sample_mask[j] == 0:
+                continue
+            for c_ in y[j]:
+                c = <int>(c_)
+                self.label_count_init[c] += 1
+
+        self.reset()
+
+    cdef int update(self, int a, int b, tuple y, int *X_argsorted_i,
+                    BOOL_t *sample_mask):
+        """Update the criteria for each value in interval [a,b) (where a and b
+           are indices in `X_argsorted_i`)."""
+        cdef int c
+        # post condition: all samples from [0:b) are on the left side
+        for idx from a <= idx < b:
+            s = X_argsorted_i[idx]
+            if sample_mask[s] == 0:
+                continue
+            for c_ in y[s]:
+                c = <int>(c_)
+                self.label_count_right[c] -= 1
+                self.label_count_left[c] += 1
+            self.n_right -= 1
+            self.n_left += 1
+
+        return self.n_left
+
+    cdef double eval(self):
+        pass
+
+
+cdef class MultiLabelGini(MultiLabelClassificationCriterion):
+    """Gini Index splitting criteria for multi label data.
+
+    Gini index = \sum_{k=0}^{K-1} pmk (1 - pmk)
+               = 1 - \sum_{k=0}^{K-1} pmk ** 2
+    """
+
+    cdef double eval(self):
+        """Returns Gini index of left branch + Gini index of right branch.
+        For each branch, mean over classes is used."""
+        cdef double n_left = <double> self.n_left
+        cdef double n_right = <double> self.n_right
+        cdef double H_left = 0
+        cdef double H_right = 0
+        cdef int k
+        cdef double count_left, count_right
+
+        for k from 0 <= k < self.n_classes:
+            count_left = self.label_count_left[k] / n_left
+            if count_left > 0:
+                H_left += count_left * (1. - count_left)
+            count_right = self.label_count_right[k] / n_right
+            if count_right > 0:
+                H_right += count_right * (1. - count_right)
+
+        return (H_left * self.n_left + H_right * self.n_right) / self.n_samples
+
 cdef class Gini(ClassificationCriterion):
     """Gini Index splitting criteria.
 
