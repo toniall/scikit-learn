@@ -18,6 +18,8 @@ from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, check_random_state, map_classes_safe
 
 from . import _tree
+from IPython.core.debugger import Tracer
+tracer = Tracer(colors="LightBG")
 
 __all__ = ["DecisionTreeClassifier",
            "DecisionTreeRegressor",
@@ -29,6 +31,7 @@ DTYPE = _tree.DTYPE
 CLASSIFICATION = {
     "gini": _tree.Gini,
     "entropy": _tree.Entropy,
+    "multi_label_gini": _tree.MultiLabelGini,
 }
 
 REGRESSION = {
@@ -260,10 +263,13 @@ class Tree(object):
 
         self.node_count += 1
 
-    def predict(self, X):
+    def predict(self, X, multi_label=False):
         out = np.empty((X.shape[0], ), dtype=np.int32)
         _tree._apply_tree(X, self.children, self.feature, self.threshold, out)
-        return self.value.take(out, axis=0)
+        prediction = self.value.take(out, axis=0)
+        if multi_label:
+            prediction /= self.n_samples[out][:, np.newaxis]
+        return prediction
 
 
 def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
@@ -303,8 +309,13 @@ def _build_tree(X, y, is_classification, criterion, max_depth, min_split,
 
         if is_classification:
             value = np.zeros((n_classes,))
-            t = np.max(current_y) + 1
-            value[:t] = np.bincount(np.array(current_y).astype(np.int))
+            if isinstance(current_y[0], tuple):
+                flat_y = np.array([ll for l in current_y for ll in l], dtype=np.int)
+            else:
+                flat_y = np.array(current_y, dtype=np.int)
+
+            t = flat_y.max() + 1
+            value[:t] = np.bincount(flat_y)
 
         else:
             value = np.asarray(np.mean(current_y))
@@ -417,6 +428,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         if is_classification:
             y, self.classes_ = map_classes_safe(y)
+            if isinstance(y[0], tuple):
+                self.criterion = "multi_label_gini"
             self.n_classes_ = self.classes_.shape[0]
             criterion = CLASSIFICATION[self.criterion](self.n_classes_)
 
@@ -424,8 +437,9 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             self.classes_ = None
             self.n_classes_ = 1
             criterion = REGRESSION[self.criterion]()
+        
+        #y = np.ascontiguousarray(y, dtype=DTYPE)
 
-        y = np.ascontiguousarray(y, dtype=DTYPE)
 
         # Check parameters
         max_depth = np.inf if self.max_depth is None else self.max_depth
@@ -496,7 +510,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         return self
 
-    def predict(self, X):
+    def predict(self, X, multi_label=False):
         """Predict class or regression target for X.
 
         For a classification model, the predicted class for each sample in X is
@@ -526,8 +540,11 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                              % (self.n_features_, n_features))
 
         if isinstance(self, ClassifierMixin):
-            predictions = self.classes_.take(np.argmax(
-                self.tree_.predict(X), axis=1), axis=0)
+            if multi_label:
+                predictions = self.tree_.predict(X, multi_label=True) > 0.5
+            else:
+                predictions = self.classes_.take(np.argmax(
+                    self.tree_.predict(X), axis=1), axis=0)
         else:
             predictions = self.tree_.predict(X).ravel()
 
@@ -670,6 +687,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              % (self.n_features_, n_features))
 
         P = self.tree_.predict(X)
+        #tracer()
         P /= P.sum(axis=1)[:, np.newaxis]
         return P
 
