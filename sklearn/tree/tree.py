@@ -542,7 +542,9 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         if isinstance(self, ClassifierMixin):
             if multi_label:
-                predictions = self.tree_.predict(X, multi_label=True) > 0.5
+                predictions = self.tree_.predict(X, multi_label=True)
+                labels = np.arange(predictions.shape[1])
+                predictions = [tuple(labels[l > .5]) for l in predictions]
             else:
                 predictions = self.classes_.take(np.argmax(
                     self.tree_.predict(X), axis=1), axis=0)
@@ -661,7 +663,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                                                      compute_importances,
                                                      random_state)
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, multi_label=False):
         """Predict class probabilities of the input samples X.
 
         Parameters
@@ -687,8 +689,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        P = self.tree_.predict(X)
-        #tracer()
+        P = self.tree_.predict(X, multi_label)
+        if multi_label:
+            return P
         P /= P.sum(axis=1)[:, np.newaxis]
         return P
 
