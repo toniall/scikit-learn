@@ -51,6 +51,16 @@ def _check_estimator(estimator):
                          "decision_function or predict_proba!")
 
 
+def _decision_function(estimators, X):
+    """Give decision function of base estimators."""
+    Y = np.array([_predict_binary(e, X) for e in estimators])
+    e = estimators[0]
+    if not hasattr(e, "decision_function"):
+        # predict_proba was used
+        Y -= 0.5
+    return Y
+
+
 def fit_ovr(estimator, X, y):
     """Fit a one-vs-the-rest strategy."""
     _check_estimator(estimator)
@@ -161,6 +171,10 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin):
                 "score is not supported for multilabel classifiers")
         else:
             return super(OneVsRestClassifier, self).score(X, y)
+
+    def decision_function(self, X):
+        """Give decision function of base estimators."""
+        return _decision_function(self.estimators_, X)
 
     @property
     def coef_(self):
@@ -281,6 +295,9 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin):
             raise ValueError("The object hasn't been fitted yet!")
 
         return predict_ovo(self.estimators_, self.classes_, X)
+
+    def decision_function(self, X):
+        return _decision_function(self.estimators_, X)
 
 
 def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
