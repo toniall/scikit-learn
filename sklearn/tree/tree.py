@@ -18,6 +18,8 @@ from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, check_random_state, map_classes_safe
 
 from . import _tree
+from IPython.core.debugger import Tracer
+tracer = Tracer(colors="LightBG")
 
 __all__ = ["DecisionTreeClassifier",
            "DecisionTreeRegressor",
@@ -510,7 +512,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         return self
 
-    def predict(self, X):
+    def predict(self, X, multi_label=False):
         """Predict class or regression target for X.
 
         For a classification model, the predicted class for each sample in X is
@@ -662,7 +664,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                                                      compute_importances,
                                                      random_state)
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, multi_label=False):
         """Predict class probabilities of the input samples X.
 
         Parameters
