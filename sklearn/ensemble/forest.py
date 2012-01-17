@@ -84,16 +84,16 @@ def _parallel_build_trees(n_trees, forest, X, y,
     return trees
 
 
-def _parallel_predict_proba(trees, X, n_classes, multi_label):
+def _parallel_predict_proba(trees, X, n_classes):
     """Private function used to compute a batch of predictions within a job."""
     p = np.zeros((X.shape[0], n_classes))
 
     for tree in trees:
         if n_classes == tree.n_classes_:
-            p += tree.predict_proba(X, multi_label)
+            p += tree.predict_proba(X)
 
         else:
-            proba = tree.predict_proba(X, multi_label)
+            proba = tree.predict_proba(X)
 
             for j, c in enumerate(tree.classes_):
                 p[:, c] += proba[:, j]
