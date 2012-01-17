@@ -37,6 +37,8 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.decomposition import PCA
 from sklearn.pls import CCA
 
+from IPython.core.debugger import Tracer
+tracer=Tracer()
 
 def plot_hyperplane(clf, min_x, max_x, linestyle, label):
     # get the separating hyperplane
@@ -62,6 +64,7 @@ def plot_subfigure(X, Y, subplot, title, transform):
 
     classif = OneVsRestClassifier(SVC(kernel='linear'))
     classif.fit(X, Y)
+    tracer()
 
     pl.subplot(2, 2, subplot)
     pl.title(title)
