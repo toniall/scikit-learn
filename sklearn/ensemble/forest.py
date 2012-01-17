@@ -175,7 +175,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         """
         # Precompute some data
         X = np.atleast_2d(X)
-        y = np.atleast_1d(y)
+        #y = np.atleast_1d(y)
 
         if self.bootstrap:
             sample_mask = None
