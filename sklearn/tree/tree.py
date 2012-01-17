@@ -18,8 +18,6 @@ from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, check_random_state, map_classes_safe
 
 from . import _tree
-from IPython.core.debugger import Tracer
-tracer = Tracer(colors="LightBG")
 
 __all__ = ["DecisionTreeClassifier",
            "DecisionTreeRegressor",
