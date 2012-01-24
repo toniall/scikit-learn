@@ -332,8 +332,7 @@ def test_bad_input():
     assert_raises(ValueError, clf.fit, X, Y2)
 
     # Test with arrays that are non-contiguous.
-    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC(),
-                svm.sparse.LinearSVC()):
+    for clf in (svm.SVC(), svm.LinearSVC(), svm.sparse.SVC()):
         Xf = np.asfortranarray(X)
         assert Xf.flags['C_CONTIGUOUS'] == False
         yf = np.ascontiguousarray(np.tile(Y, (2, 1)).T)
@@ -507,6 +506,7 @@ def test_liblinear_set_coef():
     clf.intercept_ = clf.intercept_.copy()
     values2 = clf.decision_function(X)
     assert_array_equal(values, values2)
+
 
 def test_c_samples_scaling():
     """Test C scaling by n_samples
