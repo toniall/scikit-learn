@@ -44,7 +44,6 @@ from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
 from ..utils import check_random_state
 from ..utils import map_classes_safe
 from ..metrics import r2_score
-from ..utils import map_classes_safe
 
 from .base import BaseEnsemble
 
