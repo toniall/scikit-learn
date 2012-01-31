@@ -37,7 +37,8 @@ import itertools
 import numpy as np
 
 from ..base import ClassifierMixin, RegressorMixin
-from ..externals.joblib import Parallel, delayed, cpu_count
+#from ..externals.joblib import Parallel, delayed, cpu_count
+from ..externals.joblib import Parallel, delayed
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
@@ -46,6 +47,7 @@ from ..utils import map_classes_safe
 from ..metrics import r2_score
 
 from .base import BaseEnsemble
+from .base import clone
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
@@ -109,22 +111,25 @@ def _parallel_predict_regression(trees, X):
 def _partition_trees(forest):
     """Private function used to partition trees between jobs."""
     # Compute the number of jobs
-    if forest.n_jobs == -1:
-        n_jobs = min(cpu_count(), forest.n_estimators)
+    n_jobs = forest.n_estimators
+    n_trees = [1] * n_jobs
+    starts = np.arange(n_jobs + 1)
+    #if forest.n_jobs == -1:
+        #n_jobs = min(cpu_count(), forest.n_estimators)
 
-    else:
-        n_jobs = min(forest.n_jobs, forest.n_estimators)
+    #else:
+        #n_jobs = min(forest.n_jobs, forest.n_estimators)
 
-    # Partition trees between jobs
-    n_trees = [forest.n_estimators / n_jobs] * n_jobs
+    ## Partition trees between jobs
+    #n_trees = [forest.n_estimators / n_jobs] * n_jobs
 
-    for i in xrange(forest.n_estimators % n_jobs):
-        n_trees[i] += 1
+    #for i in xrange(forest.n_estimators % n_jobs):
+        #n_trees[i] += 1
 
-    starts = [0] * (n_jobs + 1)
+    #starts = [0] * (n_jobs + 1)
 
-    for i in xrange(1, n_jobs + 1):
-        starts[i] = starts[i - 1] + n_trees[i - 1]
+    #for i in xrange(1, n_jobs + 1):
+        #starts[i] = starts[i - 1] + n_trees[i - 1]
 
     return n_jobs, n_trees, starts
 
@@ -197,12 +202,16 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, _ = _partition_trees(self)
+        n_jobs_save = self.n_jobs
+        self.n_jobs = 1
+        cloned_tree = clone(self)
+        self.n_jobs = n_jobs_save
 
         # Parallel loop
-        all_trees = Parallel(n_jobs=n_jobs)(
+        all_trees = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_build_trees)(
                 n_trees[i],
-                self,
+                cloned_tree,
                 X,
                 y,
                 sample_mask,
