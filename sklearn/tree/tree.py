@@ -662,7 +662,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                                                      compute_importances,
                                                      random_state)
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, multi_label=False):
         """Predict class probabilities of the input samples X.
 
         Parameters

@@ -42,6 +42,7 @@ from ..feature_selection.selector_mixin import SelectorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor, \
                    ExtraTreeClassifier, ExtraTreeRegressor
 from ..utils import check_random_state
+from ..utils import map_classes_safe
 from ..metrics import r2_score
 from ..utils import map_classes_safe
 
@@ -215,21 +216,22 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
         # Calculate out of bag predictions and score
         if self.oob_score:
+            n_predictions = np.zeros(X.shape[0])
             if isinstance(self, ClassifierMixin):
                 predictions = np.zeros((X.shape[0], self.n_classes_))
                 for estimator in self.estimators_:
                     mask = np.ones(X.shape[0], dtype=np.bool)
                     mask[estimator.indices_] = False
                     predictions[mask, :] += estimator.predict_proba(X[mask, :])
+                    n_predictions[mask] += 1
 
                 self.oob_decision_function_ = (predictions
-                        / predictions.sum(axis=1)[:, np.newaxis])
+                        / n_predictions[:, np.newaxis])
                 self.oob_score_ = np.mean(y == np.argmax(predictions, axis=1))
 
             else:
                 # Regression:
                 predictions = np.zeros(X.shape[0])
-                n_predictions = np.zeros(X.shape[0])
                 for estimator in self.estimators_:
                     mask = np.ones(X.shape[0], dtype=np.bool)
                     mask[estimator.indices_] = False
