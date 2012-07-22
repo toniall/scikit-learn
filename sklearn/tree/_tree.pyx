@@ -747,34 +747,46 @@ cdef class Tree:
             criterion.reset()
 
             # Find min and max
-            a = 0
-            while sample_mask_ptr[X_argsorted_i[a]] == 0:
-                a = a + 1
-            X_a = X_i[X_argsorted_i[a]]
+            #a = 0
+            #while sample_mask_ptr[X_argsorted_i[a]] == 0:
+                #a = a + 1
+            #X_a = X_i[X_argsorted_i[a]]
 
-            b = n_total_samples - 1
-            while sample_mask_ptr[X_argsorted_i[b]] == 0:
-                b = b - 1
-            X_b = X_i[X_argsorted_i[b]]
+            #b = n_total_samples - 1
+            #while sample_mask_ptr[X_argsorted_i[b]] == 0:
+                #b = b - 1
+            #X_b = X_i[X_argsorted_i[b]]
 
-            if b <= a or X_a == X_b:
-                continue
+            #if b <= a or X_a == X_b:
+                #continue
 
             # Draw a random threshold in [a, b)
-            random = random_state.rand()
-            t = X_a + (random * (X_b - X_a))
-            if t == X_b:
-                t = X_a
+            #random = random_state.rand()
+            #t = X_a + (random * (X_b - X_a))
+            #if t == X_b:
+                #t = X_a
 
             # Find the sample just greater than t
-            c = a + 1
+            #c = a + 1
 
+            #while True:
+                #if sample_mask_ptr[X_argsorted_i[c]] != 0:
+                    #if X_i[X_argsorted_i[c]] > (<DTYPE_t> t) or c == b:
+                        #break
+
+                #c += 1
+            a = 1 + random_state.randint(n_node_samples - 2)
+            c = 0
+            b = 0
             while True:
-                if sample_mask_ptr[X_argsorted_i[c]] != 0:
-                    if X_i[X_argsorted_i[c]] > (<DTYPE_t> t) or c == b:
+                if sample_mask_ptr[c]:
+                    b += 1
+                    if b == a:
                         break
-
-                c += 1
+                c +=1
+            t = X_i[c]
+            print(c)
+            print(t)
 
             # Better than the best so far?
             n_left = criterion.update(0, c, y_ptr, y_stride, X_argsorted_i, sample_mask_ptr)
