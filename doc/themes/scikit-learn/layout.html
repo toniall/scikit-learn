@@ -191,7 +191,11 @@
     {% endif %}
     {%- if (pagename != 'index') %}
     <h3>{{ _('This page') }}</h3>
+    {%- if  local_toctree(pagename, maxdepth=1) %}
+    {{ local_toctree(pagename, maxdepth=1) }}
+    {%- else %}
     {{ toc }}
+    {% endif %}
 
     <h3><a href="{{pathto('about')}}#citing-scikit-learn">Citing</a></h3>
     <p>If you use the software, please consider
