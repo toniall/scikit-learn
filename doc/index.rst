@@ -263,20 +263,17 @@ Preparing data and learning a classification model can be as easy as:
     from sklearn.neighbors import KNeighborsClassifier
     knn = KNeighborsClassifier(n_neighbors=3)
     knn.fit(X_train, y_train)
-
-    KNeighborsClassifier(algorithm='auto', leaf_size=30, n_neighbors=3, p=2,
-               weights='uniform')
     
     # apply the model to test data
-    knn.predict(X_test)
-
-    array([0, 0, 0, 1, 0, 0, 1, 0, 2, 1, 0, 0, 2, 2, 0, 0, 2, 1, 0, 0, 1, 0, 0,
-           2, 1, 1, 0, 2, 2, 2, 0, 0, 0, 1, 1, 2, 2, 1])
+    y_pred = knn.predict(X_test)
+    
+    # y_pred = array([0, 0, 0, 1, 0, 0, 1, 0, 2, 1, 0, 0, 2, 2, 0, 0, 2, 1, 0,
+    #                 0, 1, 0, 0, 2, 1, 1, 0, 2, 2, 2, 0, 0, 0, 1, 1, 2, 2, 1])
     
     # compute the accuracy on test data
-    knn.score(X_test, y_test)
+    score = knn.score(X_test, y_test)
 
-    0.97368421052631582
+    # score = 0.97368421052631582
 
 .. toctree::
    :hidden:
