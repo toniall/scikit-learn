@@ -20,6 +20,7 @@ from .utils import (array2d, atleast2d_or_csr, check_random_state,
                     as_float_array)
 from .utils.extmath import safe_sparse_dot
 from .metrics.pairwise import pairwise_kernels
+from .cluster import KMeans
 
 
 class RBFSampler(BaseEstimator, TransformerMixin):
@@ -411,7 +412,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
     sklearn.metric.pairwise.kernel_metrics : List of built-in kernels.
     """
     def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
-                 kernel_params=None, n_components=100, random_state=None):
+                 kernel_params=None, n_components=100, random_state=None,
+                 init='kmeans'):
         self.kernel = kernel
         self.gamma = gamma
         self.coef0 = coef0
@@ -419,6 +421,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         self.kernel_params = kernel_params
         self.n_components = n_components
         self.random_state = random_state
+        self.init = init
 
     def fit(self, X, y=None):
         """Fit estimator to data.
@@ -446,9 +449,19 @@ class Nystroem(BaseEstimator, TransformerMixin):
         else:
             n_components = self.n_components
         n_components = min(n_samples, n_components)
-        inds = rnd.permutation(n_samples)
-        basis_inds = inds[:n_components]
-        basis = X[basis_inds]
+        if self.init == 'random':
+            inds = rnd.permutation(n_samples)
+            basis_inds = inds[:n_components]
+            basis = X[basis_inds]
+            self.component_indices_ = basis_inds
+
+        elif self.init == 'kmeans':
+            km = KMeans(n_clusters=n_components)
+            km.fit(X)
+            basis = km.cluster_centers_
+        else:
+            raise ValueError("init should be 'random' or 'kmeans', but %s was"
+                             " passed." % self.init)
 
         if False:
             basis_kernel = self.kernel(basis, basis)
@@ -461,7 +474,6 @@ class Nystroem(BaseEstimator, TransformerMixin):
         U, S, V = svd(basis_kernel)
         self.normalization_ = np.dot(U * 1. / np.sqrt(S), V)
         self.components_ = basis
-        self.component_indices_ = inds
         return self
 
     def transform(self, X):
