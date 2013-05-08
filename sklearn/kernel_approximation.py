@@ -17,10 +17,10 @@ from scipy.linalg import svd
 from .base import BaseEstimator
 from .base import TransformerMixin
 from .utils import (array2d, atleast2d_or_csr, check_random_state,
-                    as_float_array)
+                    as_float_array, shuffle)
 from .utils.extmath import safe_sparse_dot
 from .metrics.pairwise import pairwise_kernels
-from .cluster import KMeans
+from .cluster import MiniBatchKMeans
 
 
 class RBFSampler(BaseEstimator, TransformerMixin):
@@ -413,7 +413,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
     """
     def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
                  kernel_params=None, n_components=100, random_state=None,
-                 init='kmeans'):
+                 basis='kmeans'):
         self.kernel = kernel
         self.gamma = gamma
         self.coef0 = coef0
@@ -421,7 +421,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         self.kernel_params = kernel_params
         self.n_components = n_components
         self.random_state = random_state
-        self.init = init
+        self.basis = basis
 
     def fit(self, X, y=None):
         """Fit estimator to data.
@@ -449,19 +449,22 @@ class Nystroem(BaseEstimator, TransformerMixin):
         else:
             n_components = self.n_components
         n_components = min(n_samples, n_components)
-        if self.init == 'random':
+        if self.basis == 'random':
             inds = rnd.permutation(n_samples)
             basis_inds = inds[:n_components]
             basis = X[basis_inds]
             self.component_indices_ = basis_inds
 
-        elif self.init == 'kmeans':
-            km = KMeans(n_clusters=n_components)
-            km.fit(X)
+        elif self.basis == 'kmeans':
+            km = MiniBatchKMeans(n_clusters=n_components,
+                                 random_state=self.random_state, batch_size=3 *
+                                 n_components, init='random')
+            X_shuffled = shuffle(X)
+            km.fit(X_shuffled)
             basis = km.cluster_centers_
         else:
-            raise ValueError("init should be 'random' or 'kmeans', but %s was"
-                             " passed." % self.init)
+            raise ValueError("basis should be 'random' or 'kmeans', but %s was"
+                             " passed." % self.basis)
 
         if False:
             basis_kernel = self.kernel(basis, basis)

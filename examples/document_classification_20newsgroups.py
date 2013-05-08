@@ -129,7 +129,8 @@ print()
 # split a training set and a test set
 y_train, y_test = data_train.target, data_test.target
 
-print("Extracting features from the training dataset using a sparse vectorizer")
+print("Extracting features from the training dataset using a sparse"
+      "vectorizer")
 t0 = time()
 if opts.use_hashing:
     vectorizer = HashingVectorizer(stop_words='english', non_negative=True,
@@ -288,7 +289,7 @@ clf_names, score, training_time, test_time = results
 training_time = np.array(training_time) / np.max(training_time)
 test_time = np.array(test_time) / np.max(test_time)
 
-pl.figure(figsize=(12,10))
+pl.figure(figsize=(12, 10))
 pl.title("Score")
 pl.barh(indices, score, .2, label="score", color='r')
 pl.barh(indices + .3, training_time, .2, label="training time", color='g')

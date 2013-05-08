@@ -58,8 +58,6 @@ from sklearn.decomposition import PCA
 # The digits dataset
 digits = datasets.load_digits(n_class=9)
 
-# To apply an classifier on this data, we need to flatten the image, to
-# turn the data in a (samples, feature) matrix:
 n_samples = len(digits.data)
 data = digits.data / 16.
 data -= data.mean(axis=0)
