@@ -6,7 +6,7 @@
 .. raw:: html
 
     <!-- Banner -->
-    <div class="container hero-unit" style="width:100%; padding:20px">
+    <div class="container hero-unit" style="width:100%; padding:20px 0px">
     <div class="container">
     <div class="row-fluid">
     <div class="span6">
