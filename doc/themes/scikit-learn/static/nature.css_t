@@ -63,38 +63,6 @@ span.legend {
     top: -3px;
 }
 
-div.navbar {
-    padding-top: 15px;
-    margin-left: 200px;
-}
-
-div.navbar ul {
-    background-color: #ff9c34;
-    color: white;
-    border-radius: 5px;
-    -moz-border-radius: 5px;
-    list-style: none;
-}
-
-div.navbar ul, div.navbar li {
-    display: inline;
-    list-style: none;
-    padding: 4px 10px 5px 10px;
-}
-
-div.navbar ul li a,
-div.navbar ul li a:link,
-div.navbar ul li a:visited,
-div.navbar ul li a:hover {
-    color: white;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 14px;
-}
-
-div.navbar ul li a:hover {
-    color: #EEE;
-}
 
 .gsc-input {
     width: 180px;
@@ -148,11 +116,6 @@ hr {
    border: 1px solid #B1B4B6;
 }
 
-
-div.body {
-    font-size: 0.9em;
-    margin: 10px;
-}
 
 div.footer {
     color: #555;
@@ -312,57 +275,11 @@ a:hover {
     text-decoration: underline;
 }
 
-div.body h2,
-div.body h3,
-div.body h4,
-div.body h5,
-div.body h6 {
-    font-family: Arial, sans-serif;
-    background-color: #BED4EB;
-    font-weight: normal;
-    color: #212224;
-}
-
-div.body h1,
-div.body h2,
-div.body h3 {
-    padding: 10px;
-    text-align: center;
-    border-radius: 10px;
-    font-weight: bold;
-    word-wrap: break-word;
-}
-
-div.body h2,
-div.body h3 {
-    text-align: left;
-}
 
 div.bodywrapper {
     margin: 0 0 0 0;
 }
 
-
-div.bodywrapper h1 {
-    margin: 0 -10px 0 -10px;
-    text-align: center;
-    background-color: #cde8ef;
-    font-family: Helvetica, Arial, sans-serif;
-    font-size: 190%;
-    border-radius: 0 15px 0 15px;
-    -moz-border-radius: 0 15px 0 15px;
-}
-
-div.body h3 {
-    font-size: 120%;
-    background-color: #D8DEE3;
-    padding: 5px;
-    border-radius: 10px;
-
-}
-div.body h4 { font-size: 110%; background-color: #D8DEE3; }
-div.body h5 { font-size: 100%; background-color: #D8DEE3; }
-div.body h6 { font-size: 100%; background-color: #D8DEE3; }
 
 a.headerlink {
     color: #c60f0f;
@@ -695,7 +612,7 @@ div#examples.section .figure:active img{
 
 
 /* ------- Zoom plots to make them fit in layout -------------------------- */
-div.body img {
+div.body img.align-center {
     max-width:805px;
 }
 
