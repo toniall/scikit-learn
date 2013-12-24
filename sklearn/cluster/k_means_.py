@@ -40,20 +40,20 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 
     Parameters
     -----------
-    X: array or sparse matrix, shape (n_samples, n_features)
+    X : array or sparse matrix, shape (n_samples, n_features)
         The data to pick seeds for. To avoid memory copy, the input data
         should be double precision (dtype=np.float64).
 
-    n_clusters: integer
+    n_clusters : integer
         The number of seeds to choose
 
-    x_squared_norms: array, shape (n_samples,)
+    x_squared_norms : array, shape (n_samples,)
         Squared Euclidean norm of each data point.
 
-    random_state: numpy.RandomState
+    random_state : numpy.RandomState
         The generator used to initialize the centers.
 
-    n_local_trials: integer, optional
+    n_local_trials : integer, optional
         The number of seeding trials for each center (except the first),
         of which the one reducing inertia the most is greedily chosen.
         Set to None to make the number of trials depend logarithmically
@@ -820,7 +820,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
                      old_center_buffer, compute_squared_diff,
                      distances, random_reassign=False,
                      random_state=None, reassignment_ratio=.01,
-                     verbose=False):
+                     verbose=False, reassign_strat="random"):
     """Incremental update of the centers for the Minibatch K-Means algorithm.
 
     Parameters
@@ -889,11 +889,34 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
             # Pick new clusters amongst observations with probability
             # proportional to their closeness to their center.
             # Flip the ordering of the distances.
-            distances += 1e-10
-            distances /= distances.sum()
+            if reassign_strat == "proportional":
+                if verbose:
+                    print("proportional reassignment")
+                distances += 1e-10
+                distances /= distances.sum()
 
-            new_centers = choice(X.shape[0], replace=False, p=distances,
-                                 size=n_reassigns)
+                new_centers = choice(X.shape[0], replace=False, p=distances,
+                                     size=n_reassigns,
+                                     random_state=random_state)
+            elif reassign_strat == "anti-proportional":
+                if verbose:
+                    print("anti-proportional reassignment")
+                distances *= -1
+                distances -= distances.min()
+                distances += 1e-10
+                distances /= distances.sum()
+
+                new_centers = choice(X.shape[0], replace=False, p=distances,
+                                     size=n_reassigns,
+                                     random_state=random_state)
+            elif reassign_strat == "random":
+                if verbose:
+                    print("random reassignment")
+                new_centers = choice(X.shape[0], replace=False,
+                                     size=n_reassigns,
+                                     random_state=random_state)
+            else:
+                raise ValueError("unkonwn reassign_strat: %s" % reassign_strat)
             if verbose:
                 print("[MiniBatchKMeans] Reassigning %i cluster centers."
                       % n_reassigns)
@@ -1108,12 +1131,13 @@ class MiniBatchKMeans(KMeans):
     def __init__(self, n_clusters=8, init='k-means++', max_iter=100,
                  batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
-                 init_size=None, n_init=3, reassignment_ratio=0.01):
+                 init_size=None, n_init=3, reassignment_ratio=0.01,
+                 reassign_strat="random"):
 
         super(MiniBatchKMeans, self).__init__(
             n_clusters=n_clusters, init=init, max_iter=max_iter,
             verbose=verbose, random_state=random_state, tol=tol, n_init=n_init)
-
+        self.reassign_strat = reassign_strat
         self.max_no_improvement = max_no_improvement
         self.batch_size = batch_size
         self.compute_labels = compute_labels
@@ -1193,7 +1217,8 @@ class MiniBatchKMeans(KMeans):
             batch_inertia, centers_squared_diff = _mini_batch_step(
                 X_valid, x_squared_norms[validation_indices],
                 cluster_centers, counts, old_center_buffer, False,
-                distances=None, verbose=self.verbose)
+                distances=None, verbose=self.verbose,
+                reassign_strat=self.reassign_strat)
 
             # Keep only the best cluster centers across independent inits on
             # the common validation set
@@ -1231,7 +1256,7 @@ class MiniBatchKMeans(KMeans):
                                  % (10 + self.counts_.min()) == 0),
                 random_state=random_state,
                 reassignment_ratio=self.reassignment_ratio,
-                verbose=self.verbose)
+                verbose=self.verbose, reassign_strat=self.reassign_strat)
 
             # Monitor convergence and do early stopping if necessary
             if _mini_batch_convergence(
@@ -1293,7 +1318,8 @@ class MiniBatchKMeans(KMeans):
                          random_reassign=random_reassign, distances=distances,
                          random_state=self.random_state_,
                          reassignment_ratio=self.reassignment_ratio,
-                         verbose=self.verbose)
+                         verbose=self.verbose,
+                         reassign_strat=self.reassign_strat)
 
         if self.compute_labels:
             self.labels_, self.inertia_ = _labels_inertia(
