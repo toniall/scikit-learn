@@ -36,8 +36,10 @@ faces = datasets.fetch_olivetti_faces()
 # Learn the dictionary of images
 
 print('Learning the dictionary... ')
-rng = np.random.RandomState(0)
-kmeans = MiniBatchKMeans(n_clusters=81, random_state=rng, verbose=True)
+rng = np.random.RandomState(3)
+kmeans = MiniBatchKMeans(n_clusters=81, random_state=rng, verbose=True,
+                         reassign_strat='anti-proportional',
+                         reassignment_ratio=0.01)
 patch_size = (20, 20)
 
 buffer = []
@@ -46,11 +48,13 @@ t0 = time.time()
 
 # The online learning part: cycle over the whole dataset 4 times
 index = 0
+all_data = []
 for _ in range(6):
     for img in faces.images:
         data = extract_patches_2d(img, patch_size, max_patches=50,
                                   random_state=rng)
         data = np.reshape(data, (len(data), -1))
+        all_data.append(data)
         buffer.append(data)
         index += 1
         if index % 10 == 0:
@@ -66,16 +70,25 @@ for _ in range(6):
 dt = time.time() - t0
 print('done in %.2fs.' % dt)
 
+all_data = np.vstack(all_data)
+all_data -= np.mean(all_data, axis=0)
+all_data /= np.std(all_data, axis=0)
+
+print(kmeans.inertia_)
+pred = kmeans.predict(all_data)
+print(np.bincount(np.bincount(pred)))[:20]
+#from IPython.core.debugger import Tracer
+#Tracer()()
+
 ###############################################################################
 # Plot the results
 pl.figure(figsize=(4.2, 4))
-for i, patch in enumerate(kmeans.cluster_centers_):
+for i, patch in enumerate(kmeans.cluster_centers_[:81]):
     pl.subplot(9, 9, i + 1)
     pl.imshow(patch.reshape(patch_size), cmap=pl.cm.gray,
               interpolation='nearest')
     pl.xticks(())
     pl.yticks(())
-
 
 pl.suptitle('Patches of faces\nTrain time %.1fs on %d patches' %
             (dt, 8 * len(faces.images)), fontsize=16)

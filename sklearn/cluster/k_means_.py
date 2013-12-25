@@ -926,6 +926,8 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
                                 centers)
             else:
                 centers[to_reassign] = X[new_centers]
+            counts[to_reassign] = np.min(counts[~to_reassign])
+            #counts[:] = 0
 
     # implementation for the sparse CSR representation completely written in
     # cython
