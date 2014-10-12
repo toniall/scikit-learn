@@ -472,6 +472,27 @@ def test_KNeighborsRegressor_multioutput_uniform_weight():
         assert_array_almost_equal(y_pred, y_pred_idx)
 
 
+def test_radius_neighbors_regressor_zero_distance():
+    """ Test radius-based regressor, when distance to a sample is zero. """
+
+    X = np.array([[1.0, 1.0], [1.0, 1.0], [2.0, 2.0]])
+    y = np.array([1.0, 1.5, 2.0])
+    radius = 0.1
+    z = np.array([[1.01, 1.01], [2.0, 2.0]])
+    correct_labels = np.array([1.25, 2.0])
+
+
+    for algorithm in ALGORITHMS:
+        # we don't test for weights=_weight_func since user will be expected
+        # to handle zero distances themselves in the function.
+        for weights in ['uniform', 'distance']:
+            rnn = neighbors.RadiusNeighborsRegressor(radius=radius,
+                                                     weights=weights,
+                                                     algorithm=algorithm)
+            rnn.fit(X, y)
+            assert_array_almost_equal(correct_labels, rnn.predict(z))
+
+
 def test_kneighbors_regressor_multioutput(n_samples=40,
                                           n_features=5,
                                           n_test_pts=10,
