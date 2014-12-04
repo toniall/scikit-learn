@@ -373,9 +373,62 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # Run the Stochastic Gradient Descent algorithm
         if self.algorithm == 'sgd':
-            prev_cost = np.inf
-            cost_increase_count = 0
+            self._fit_sgd(X, y, activations, deltas, coef_grads,
+                          intercept_grads, layer_units, incremental)
 
+        # Run the LBFGS algorithm
+        elif self.algorithm == 'l-bfgs':
+            self._fit_lbfgs(X, y, activations, deltas, coef_grads,
+                            intercept_grads, layer_units)
+        return self
+
+    def _fit_lbfgs(self, X, y, activations, deltas, coef_grads, intercept_grads,
+                   layer_units):
+        # Store meta information for the parameters
+        self._coef_indptr = []
+        self._intercept_indptr = []
+        start = 0
+
+        # Save sizes and indices of coefficients for faster unpacking
+        for i in range(self.n_layers_ - 1):
+            n_fan_in, n_fan_out = layer_units[i], layer_units[i + 1]
+
+            end = start + (n_fan_in * n_fan_out)
+            self._coef_indptr.append((start, end, (n_fan_in, n_fan_out)))
+            start = end
+
+        # Save sizes and indices of intercepts for faster unpacking
+        for i in range(self.n_layers_ - 1):
+            end = start + layer_units[i + 1]
+            self._intercept_indptr.append((start, end))
+            start = end
+
+        # Run LBFGS
+        packed_coef_inter = _pack(self.layers_coef_,
+                                  self.layers_intercept_)
+
+        if self.verbose is True or self.verbose >= 1:
+            iprint = 1
+        else:
+            iprint = -1
+
+        optimal_parameters, self.cost_, d = fmin_l_bfgs_b(
+            x0=packed_coef_inter,
+            func=self._cost_grad_lbfgs,
+            maxfun=self.max_iter,
+            iprint=iprint,
+            pgtol=self.tol,
+            args=(X, y, activations, deltas, coef_grads, intercept_grads))
+
+        self._unpack(optimal_parameters)
+
+    def _fit_sgd(self, X, y, activations, deltas, coef_grads, intercept_grads,
+                 layer_units, incremental):
+        prev_cost = np.inf
+        cost_increase_count = 0
+        n_samples = X.shape[0]
+        batch_size = np.clip(self.batch_size, 1, n_samples)
+        try:
             for i in range(self.max_iter):
                 for batch_slice in gen_batches(n_samples, batch_size):
                     activations[0] = X[batch_slice]
@@ -423,47 +476,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                     warnings.warn('SGD: Maximum iterations have reached and'
                                   ' the optimization hasn\'t converged yet.'
                                   % (), ConvergenceWarning)
-        # Run the LBFGS algorithm
-        elif self.algorithm == 'l-bfgs':
-            # Store meta information for the parameters
-            self._coef_indptr = []
-            self._intercept_indptr = []
-            start = 0
-
-            # Save sizes and indices of coefficients for faster unpacking
-            for i in range(self.n_layers_ - 1):
-                n_fan_in, n_fan_out = layer_units[i], layer_units[i + 1]
-
-                end = start + (n_fan_in * n_fan_out)
-                self._coef_indptr.append((start, end, (n_fan_in, n_fan_out)))
-                start = end
-
-            # Save sizes and indices of intercepts for faster unpacking
-            for i in range(self.n_layers_ - 1):
-                end = start + layer_units[i + 1]
-                self._intercept_indptr.append((start, end))
-                start = end
-
-            # Run LBFGS
-            packed_coef_inter = _pack(self.layers_coef_,
-                                      self.layers_intercept_)
-
-            if self.verbose is True or self.verbose >= 1:
-                iprint = 1
-            else:
-                iprint = -1
-
-            optimal_parameters, self.cost_, d = fmin_l_bfgs_b(
-                x0=packed_coef_inter,
-                func=self._cost_grad_lbfgs,
-                maxfun=self.max_iter,
-                iprint=iprint,
-                pgtol=self.tol,
-                args=(X, y, activations, deltas, coef_grads, intercept_grads))
-
-            self._unpack(optimal_parameters)
-
-        return self
+        except KeyboardInterrupt:
+            pass
 
     def fit(self, X, y):
         """Fit the model to the data X and target y.

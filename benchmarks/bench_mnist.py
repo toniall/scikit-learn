@@ -110,7 +110,7 @@ def benchmark(clf):
     err = metrics.zero_one_loss(y_test, pred)
     return err, train_time, test_time
 
-# Train MultilayerPerceptron model
+# Train Logistic Regression model
 classifiers['LogisticRegression'] = LogisticRegression()
 
 # Train MultilayerPerceptron model
