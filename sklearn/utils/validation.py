@@ -216,6 +216,8 @@ def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
     """Input validation on an array, list, sparse matrix or similar.
 
     By default, the input is converted to an at least 2nd numpy array.
+    If the dtype of the array is object, we attempt converting to float,
+    raising on failure.
 
     Parameters
     ----------
@@ -229,7 +231,8 @@ def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
         converted to the first listed format.
 
     dtype : string, type or None (default=none)
-        Data type of result. If None, the dtype of the input is preserved.
+        Data type of result. If None, the dtype of the input is preserved,
+        unless array.dtype is object.
 
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
@@ -261,6 +264,9 @@ def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
     else:
         if ensure_2d:
             array = np.atleast_2d(array)
+        if dtype is None and getattr(array, "dtype", None) is object:
+            # if no conversion is given, and input is object, convert to float.
+            dtype = np.float
         array = np.array(array, dtype=dtype, order=order, copy=copy)
         if not allow_nd and array.ndim >= 3:
             raise ValueError("Found array with dim %d. Expected <= 2" %
