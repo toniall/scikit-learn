@@ -149,10 +149,12 @@ def check_regressors_classifiers_sparse_data(name, Estimator):
 def check_dtype_object(name, Estimator):
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10).astype(object)
-    y = rng.randint(0, 4, size=40)
+    y = (X[:, 0] * 4).astype(np.int)
+    y = multioutput_estimator_convert_y_2d(name, y)
     #y = y.astype(object)
     with warnings.catch_warnings():
         estimator = Estimator()
+    set_fast_parameters(estimator)
     msg = " does not handle dtype object in "
     try:
         if is_supervised(estimator):
