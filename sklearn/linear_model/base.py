@@ -363,7 +363,8 @@ class LinearRegression(LinearModel, RegressorMixin):
             n_jobs_ = n_jobs
         else:
             n_jobs_ = self.n_jobs
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'], y_numeric=True)
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                         y_numeric=True, multi_output=True)
 
         X, y, X_mean, y_mean, X_std = self._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
