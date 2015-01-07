@@ -385,7 +385,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if selection not in ['random', 'cyclic']:
         raise ValueError("selection should be either random or cyclic.")
     random = (selection == 'random')
-    models = []
 
     if not multi_output:
         coefs = np.empty((n_features, n_alphas), dtype=np.float64)
@@ -614,7 +613,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         X, y = check_X_y(X, y, accept_sparse='csc', dtype=np.float64,
                          order='F', copy=self.copy_X and self.fit_intercept,
-                         multi_output=True)
+                         multi_output=True, y_numeric=True)
 
         X, y, X_mean, y_mean, X_std, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,

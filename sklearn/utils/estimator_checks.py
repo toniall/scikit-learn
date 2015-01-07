@@ -151,32 +151,26 @@ def check_dtype_object(name, Estimator):
     X = rng.rand(40, 10).astype(object)
     y = (X[:, 0] * 4).astype(np.int)
     y = multioutput_estimator_convert_y_2d(name, y)
-    #y = y.astype(object)
     with warnings.catch_warnings():
         estimator = Estimator()
     set_fast_parameters(estimator)
-    msg = " does not handle dtype object in "
-    try:
-        if is_supervised(estimator):
-            estimator.fit(X, y)
-        else:
-            estimator.fit(X)
-    except:
-        print(name + msg + "fit.")
-        raise
+
+    if is_supervised(estimator):
+        estimator.fit(X, y)
+    else:
+        estimator.fit(X)
     if hasattr(estimator, "predict"):
-        try:
-            estimator.predict(X)
-        except:
-            print(name + msg + "predict.")
-            raise
+        estimator.predict(X)
 
     if hasattr(estimator, "transform"):
+        estimator.transform(X)
+
+    if is_supervised(estimator):
         try:
-            estimator.transform(X)
-        except:
-            print(name + msg + "predict.")
-            raise
+            estimator.fit(X, y.astype(object))
+        except Exception as e:
+            if "Unknown label type" not in str(e):
+                raise
 
     #X[0, 0] = {'foo': 'bar'}
     #try:

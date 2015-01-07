@@ -23,7 +23,6 @@ The module structure is the following:
 from __future__ import print_function
 from __future__ import division
 from abc import ABCMeta, abstractmethod
-from warnings import warn
 from time import time
 
 import numbers
@@ -1124,9 +1123,11 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
 
     def _validate_y(self, y):
         self.n_classes_ = 1
-
+        if y.dtype is np.dtype(object):
+            y = y.astype(np.float)
         # Default implementation
         return y
+
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.

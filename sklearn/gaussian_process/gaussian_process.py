@@ -11,7 +11,7 @@ from scipy import linalg, optimize
 
 from ..base import BaseEstimator, RegressorMixin
 from ..metrics.pairwise import manhattan_distances
-from ..utils import check_random_state, check_array, check_consistent_length
+from ..utils import check_random_state, check_array, check_X_y
 from . import regression_models as regression
 from . import correlation_models as correlation
 
@@ -263,12 +263,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self.random_state = check_random_state(self.random_state)
 
         # Force data to 2D numpy.array
-        X = check_array(X)
-        y = np.asarray(y)
+        X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
         self.y_ndim_ = y.ndim
         if y.ndim == 1:
             y = y[:, np.newaxis]
-        check_consistent_length(X, y)
 
         # Check shapes of DOE & observations
         n_samples, n_features = X.shape

@@ -217,7 +217,7 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     """Input validation on an array, list, sparse matrix or similar.
 
     By default, the input is converted to an at least 2nd numpy array.
-    If the dtype of the array is object, we attempt converting to float,
+    If the dtype of the array is object, attempt converting to float,
     raising on failure.
 
     Parameters
@@ -283,14 +283,16 @@ def check_array(array, accept_sparse=None, dtype="numeric", order=None,
     return array
 
 
-def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
-              force_all_finite=True, ensure_2d=True, allow_nd=False,
-              multi_output=False):
+def check_X_y(X, y, accept_sparse=None, dtype="numeric", order=None,
+              copy=False, force_all_finite=True, ensure_2d=True,
+              allow_nd=False, multi_output=False, y_numeric=False):
     """Input validation for standard estimators.
 
     Checks X and y for consistent length, enforces X 2d and y 1d.
     Standard input checks are only applied to y. For multi-label y,
     set multi_ouput=True to allow 2d and sparse y.
+    If the dtype of X is object, attempt converting to float,
+    raising on failure.
 
     Parameters
     ----------
@@ -306,8 +308,9 @@ def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
         If the input is sparse but not in the allowed format, it will be
         converted to the first listed format.
 
-    dtype : string, type or None (default=none)
+    dtype : string, type or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
+        If "numeric", dtype is preserved unless array.dtype is object.
 
     order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
@@ -329,6 +332,10 @@ def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
         Whether to allow 2-d y (array or sparse matrix). If false, y will be
         validated as a vector.
 
+    y_numeric : boolean (default=False)
+        Whether to ensure that y has a numeric type. If dtype of y is object,
+        it is converted to float. Should only be used for regression algorithms.
+
     Returns
     -------
     X_converted : object
@@ -340,9 +347,9 @@ def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
         y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False, dtype=None)
     else:
         y = column_or_1d(y, warn=True)
-        #if y.dtype is np.dtype(object):
-            #y = y.astype(np.float)
         _assert_all_finite(y)
+    if y_numeric and y.dtype is np.dtype(object):
+        y = y.astype(np.float)
 
     check_consistent_length(X, y)
 
@@ -406,6 +413,7 @@ def check_random_state(seed):
         return seed
     raise ValueError('%r cannot be used to seed a numpy.random.RandomState'
                      ' instance' % seed)
+
 
 def has_fit_parameter(estimator, parameter):
     """ Checks whether the estimator's fit method supports the given parameter.
