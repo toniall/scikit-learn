@@ -264,7 +264,7 @@ def check_array(array, accept_sparse=None, dtype=None, order=None, copy=False,
     else:
         if ensure_2d:
             array = np.atleast_2d(array)
-        if dtype is None and getattr(array, "dtype", None) is object:
+        if dtype is None and getattr(array, "dtype", None) is np.dtype(object):
             # if no conversion is given, and input is object, convert to float.
             dtype = np.float
         array = np.array(array, dtype=dtype, order=order, copy=copy)
@@ -334,6 +334,8 @@ def check_X_y(X, y, accept_sparse=None, dtype=None, order=None, copy=False,
         y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False)
     else:
         y = column_or_1d(y, warn=True)
+        #if y.dtype is np.dtype(object):
+            #y = y.astype(np.float)
         _assert_all_finite(y)
 
     check_consistent_length(X, y)

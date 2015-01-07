@@ -146,6 +146,46 @@ def check_regressors_classifiers_sparse_data(name, Estimator):
         raise
 
 
+def check_dtype_object(name, Estimator):
+    rng = np.random.RandomState(0)
+    X = rng.rand(40, 10).astype(object)
+    y = rng.randint(0, 4, size=40)
+    #y = y.astype(object)
+    with warnings.catch_warnings():
+        estimator = Estimator()
+    msg = " does not handle dtype object in "
+    try:
+        if is_supervised(estimator):
+            estimator.fit(X, y)
+        else:
+            estimator.fit(X)
+    except:
+        print(name + msg + "fit.")
+        raise
+    if hasattr(estimator, "predict"):
+        try:
+            estimator.predict(X)
+        except:
+            print(name + msg + "predict.")
+            raise
+
+    if hasattr(estimator, "transform"):
+        try:
+            estimator.transform(X)
+        except:
+            print(name + msg + "predict.")
+            raise
+
+    #X[0, 0] = {'foo': 'bar'}
+    #try:
+        #if is_supervised(Estimator):
+            #estimator.fit(X, y)
+        #else:
+            #estimator.fit(X)
+    #except:
+        #pass
+
+
 def check_transformer(name, Transformer):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
