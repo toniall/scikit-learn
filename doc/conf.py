@@ -241,5 +241,4 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
                                          u'https://github.com/scikit-learn/'
                                          'scikit-learn/blob/{revision}/'
                                          '{package}/{path}#L{lineno}')
-spelling_lang = 'en'
 spelling_word_list_filename = 'spelling_wordlist.txt'
