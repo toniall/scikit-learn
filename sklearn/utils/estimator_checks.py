@@ -252,6 +252,35 @@ def _check_transformer(name, Transformer, X, y):
             assert_raises(ValueError, transformer.transform, X.T)
 
 
+def check_estimators_dtypes(name, Estimator):
+    rnd = np.random.RandomState(0)
+    X_train_32 = 4 * rnd.uniform(size=(10, 3)).astype(np.float32)
+    X_train_64 = X_train_32.astype(np.float64)
+    X_train_int_64 = X_train_32.astype(np.int64)
+    X_train_int_32 = X_train_32.astype(np.int32)
+    y = X_train_int_64[:, 0]
+    y = multioutput_estimator_convert_y_2d(name, y)
+    for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
+        with warnings.catch_warnings(record=True):
+            estimator = Estimator()
+        set_fast_parameters(estimator)
+        set_random_state(estimator, 1)
+        if issubclass(Estimator, ClusterMixin):
+            estimator.fit(X_train)
+        else:
+            estimator.fit(X_train, y)
+
+        for method in ["predict", "transform", "decision_function",
+                       "predict_proba"]:
+            try:
+                if hasattr(estimator, method):
+                    getattr(estimator, method)(X_train)
+            except NotImplementedError:
+                # FIXME
+                # non-standard handling of ducktyping in BaggingEstimator
+                pass
+
+
 def check_estimators_nan_inf(name, Estimator):
     rnd = np.random.RandomState(0)
     X_train_finite = rnd.uniform(size=(10, 3))

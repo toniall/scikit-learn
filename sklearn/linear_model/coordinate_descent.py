@@ -389,7 +389,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if selection not in ['random', 'cyclic']:
         raise ValueError("selection should be either random or cyclic.")
     random = (selection == 'random')
-    models = []
 
     if not multi_output:
         coefs = np.empty((n_features, n_alphas), dtype=np.float64)
@@ -1016,7 +1015,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             # Let us not impose fortran ordering or float64 so far: it is
             # not useful for the cross-validation loop and will be done
             # by the model fitting itself
-            X = check_array(X, 'csc', copy=False)
+            X = check_array(X, 'csc', copy=False, dtype=np.float64)
             if sparse.isspmatrix(X):
                 if not np.may_share_memory(reference_to_old_X.data, X.data):
                     # X is a sparse matrix and has been copied
@@ -1417,6 +1416,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
+
 
 ###############################################################################
 # Multi Task ElasticNet and Lasso models (with joint feature selection)

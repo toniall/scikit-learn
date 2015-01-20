@@ -30,6 +30,7 @@ from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
     check_parameters_default_constructible,
     check_estimator_sparse_data,
+    check_estimators_dtypes,
     check_transformer,
     check_clustering,
     check_clusterer_compute_labels_predict,
@@ -87,12 +88,14 @@ def test_non_meta_estimators():
     estimators = all_estimators(type_filter=['classifier', 'regressor',
                                              'transformer', 'cluster'])
     for name, Estimator in estimators:
+        if name not in CROSS_DECOMPOSITION + ['SelectFdr']:
+            yield check_estimators_dtypes, name, Estimator
+
         if name not in CROSS_DECOMPOSITION + ['Imputer']:
             # Test that all estimators check their input for NaN's and infs
             yield check_estimators_nan_inf, name, Estimator
 
-        if (name not in ['CCA', '_CCA', 'PLSCanonical', 'PLSRegression',
-                         'PLSSVD', 'GaussianProcess']):
+        if name not in CROSS_DECOMPOSITION + ['GaussianProcess']:
             # FIXME!
             # in particular GaussianProcess!
             yield check_estimators_overwrite_params, name, Estimator
