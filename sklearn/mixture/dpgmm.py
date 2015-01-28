@@ -134,7 +134,7 @@ class DPGMM(GMM):
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
 
-    alpha: float, default 1
+    alpha : float, default 1
         Real number representing the concentration parameter of
         the dirichlet process. Intuitively, the Dirichlet Process
         is as likely to start a new cluster for a point as it is
@@ -142,18 +142,27 @@ class DPGMM(GMM):
         higher alpha means more clusters, as the expected number
         of clusters is ``alpha*log(N)``.
 
+    mean_prior : float, default=0.0001
+        Precision of the prior over mixture means. A higher mean_prior will
+        result in biasing means more towards zero, while a lower mean_prior
+        conforms to less prior belief.
+
+    covariance_prior : float, default=0.0001
+        Scaling of gamma or Wishard prior on the covariance. A higher prior
+        will result in a more concentrated prior around a covariance of one.
+
     thresh : float, default 1e-2
         Convergence threshold.
 
     n_iter : int, default 10
         Maximum number of iterations to perform before convergence.
 
-    params : string, default 'wmc' 
+    params : string, default 'wmc'
         Controls which parameters are updated in the training
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.
 
-    init_params : string, default 'wmc' 
+    init_params : string, default 'wmc'
         Controls which parameters are updated in the initialization
         process.  Can contain any combination of 'w' for weights,
         'm' for means, and 'c' for covars.  Defaults to 'wmc'.
@@ -198,10 +207,13 @@ class DPGMM(GMM):
     """
 
     def __init__(self, n_components=1, covariance_type='diag', alpha=1.0,
-                 random_state=None, thresh=1e-2, verbose=False,
-                 min_covar=None, n_iter=10, params='wmc', init_params='wmc'):
+                 random_state=None, thresh=1e-2, verbose=False, min_covar=None,
+                 n_iter=10, params='wmc', init_params='wmc', mean_prior=0.0001,
+                 covariance_prior=0.0001):
         self.alpha = alpha
         self.verbose = verbose
+        self.mean_prior = mean_prior
+        self.covariance_prior = covariance_prior
         super(DPGMM, self).__init__(n_components, covariance_type,
                                     random_state=random_state,
                                     thresh=thresh, min_covar=min_covar,
@@ -293,14 +305,14 @@ class DPGMM(GMM):
             if self.covariance_type in ['spherical', 'diag']:
                 num = np.sum(z.T[k].reshape((-1, 1)) * X, axis=0)
                 num *= self.precs_[k]
-                den = 1. + self.precs_[k] * np.sum(z.T[k])
+                den = self.mean_prior + self.precs_[k] * np.sum(z.T[k])
                 self.means_[k] = num / den
             elif self.covariance_type in ['tied', 'full']:
                 if self.covariance_type == 'tied':
                     cov = self.precs_
                 else:
                     cov = self.precs_[k]
-                den = np.identity(n_features) + cov * np.sum(z.T[k])
+                den = self.mean_prior * np.identity(n_features) + cov * np.sum(z.T[k])
                 num = np.sum(z.T[k].reshape((-1, 1)) * X, axis=0)
                 num = np.dot(cov, num)
                 self.means_[k] = linalg.lstsq(den, num)[0]
@@ -313,7 +325,7 @@ class DPGMM(GMM):
             for k in range(self.n_components):
                 # could be more memory efficient ?
                 sq_diff = np.sum((X - self.means_[k]) ** 2, axis=1)
-                self.scale_[k] = 1.
+                self.scale_[k] = self.covariance_prior
                 self.scale_[k] += 0.5 * np.sum(z.T[k] * (sq_diff + n_features))
                 self.bound_prec_[k] = (
                     0.5 * n_features * (
@@ -324,7 +336,7 @@ class DPGMM(GMM):
             for k in range(self.n_components):
                 self.dof_[k].fill(1. + 0.5 * np.sum(z.T[k], axis=0))
                 sq_diff = (X - self.means_[k]) ** 2  # see comment above
-                self.scale_[k] = np.ones(n_features) + 0.5 * np.dot(
+                self.scale_[k] = self.covariance_prior * np.ones(n_features) + 0.5 * np.dot(
                     z.T[k], (sq_diff + 1))
                 self.precs_[k] = self.dof_[k] / self.scale_[k]
                 self.bound_prec_[k] = 0.5 * np.sum(digamma(self.dof_[k])
@@ -333,7 +345,7 @@ class DPGMM(GMM):
 
         elif self.covariance_type == 'tied':
             self.dof_ = 2 + X.shape[0] + n_features
-            self.scale_ = (X.shape[0] + 1) * np.identity(n_features)
+            self.scale_ = (X.shape[0] + self.covariance_prior) * np.identity(n_features)
             for k in range(self.n_components):
                 diff = X - self.means_[k]
                 self.scale_ += np.dot(diff.T, z[:, k:k + 1] * diff)
@@ -348,7 +360,7 @@ class DPGMM(GMM):
             for k in range(self.n_components):
                 sum_resp = np.sum(z.T[k])
                 self.dof_[k] = 2 + sum_resp + n_features
-                self.scale_[k] = (sum_resp + 1) * np.identity(n_features)
+                self.scale_[k] = (sum_resp + self.covariance_prior) * np.identity(n_features)
                 diff = X - self.means_[k]
                 self.scale_[k] += np.dot(diff.T, z[:, k:k + 1] * diff)
                 self.scale_[k] = pinvh(self.scale_[k])
@@ -461,7 +473,7 @@ class DPGMM(GMM):
     def lower_bound(self, X, z):
         """returns a lower bound on model evidence based on X and membership"""
         check_is_fitted(self, 'means_')
-        
+
         if self.covariance_type not in ['full', 'tied', 'diag', 'spherical']:
             raise NotImplementedError("This ctype is not implemented: %s"
                                       % self.covariance_type)
