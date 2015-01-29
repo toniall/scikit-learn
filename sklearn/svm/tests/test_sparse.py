@@ -73,11 +73,12 @@ def test_svc():
 
 def test_kernels():
     kernels = ["poly", "rbf", "sigmoid"]
-    for k in kernels:
-        sp_clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
-        clf = svm.SVC(kernel=k).fit(iris.data.todense(), iris.target)
-        assert_array_almost_equal(clf.decision_function(iris.data.todense()),
-                                  sp_clf.decision_function(iris.data))
+    for target in [iris.target % 2, iris.target]:
+        for k in kernels:
+            sp_clf = svm.SVC(kernel=k).fit(iris.data, target)
+            clf = svm.SVC(kernel=k).fit(iris.data.todense(), target)
+            assert_array_almost_equal(clf.decision_function(iris.data.todense()),
+                                      sp_clf.decision_function(iris.data))
 
 
 def test_unsorted_indices():
