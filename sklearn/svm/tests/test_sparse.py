@@ -144,7 +144,7 @@ def test_sparse_decision_function():
     # multi class:
     clf = svm.SVC(kernel='linear', C=0.1).fit(iris.data, iris.target)
 
-    dec = np.dot(iris.data, clf.coef_.T) + clf.intercept_
+    dec = safe_sparse_dot(iris.data, clf.coef_.T) + clf.intercept_
 
     assert_array_almost_equal(dec, clf.decision_function(iris.data))
 
