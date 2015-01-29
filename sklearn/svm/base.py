@@ -400,7 +400,7 @@ class BaseLibSVM(BaseEstimator):
             self.support_vectors_.data,
             self.support_vectors_.indices,
             self.support_vectors_.indptr,
-            self.dual_coef_.data, self._intercept_,
+            self.dual_coef_.toarray().ravel(), self._intercept_,
             LIBSVM_IMPL.index(self.impl), kernel_type,
             self.degree, self.gamma, self.coef0, self.tol,
             self.C, self.class_weight_,
