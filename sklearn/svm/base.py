@@ -7,7 +7,7 @@ from abc import ABCMeta, abstractmethod
 
 from . import libsvm, liblinear
 from . import libsvm_sparse
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils import check_array, check_random_state, column_or_1d
 from ..utils import ConvergenceWarning, compute_class_weight
@@ -70,7 +70,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
                  class_weight, verbose, max_iter, random_state):
 
-        if not impl in LIBSVM_IMPL:  # pragma: no cover
+        if impl not in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
 
@@ -358,16 +358,30 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         # NOTE: _validate_for_predict contains check for is_fitted
         # hence must be placed before any other attributes are used.
         X = self._validate_for_predict(X)
-        if self._sparse:
-            raise NotImplementedError("Decision_function not supported for"
-                                      " sparse SVM.")
         X = self._compute_kernel(X)
+
+        X = self._validate_for_predict(X)
+
+        if self._sparse:
+            dec_func = self._sparse_decision_function(X)
+        else:
+            dec_func = self._dense_decision_function(X)
+
+        # In binary case, we need to flip the sign of coef, intercept and
+        # decision function.
+        if self.impl != 'one_class' and len(self.classes_) == 2:
+            return -dec_func
+
+        return dec_func
+
+    def _dense_decision_function(self, X):
+        X = check_array(X, dtype=np.float64, order="C")
 
         kernel = self.kernel
         if callable(kernel):
             kernel = 'precomputed'
 
-        dec_func = libsvm.decision_function(
+        return libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self._intercept_,
             self.probA_, self.probB_,
@@ -375,16 +389,31 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             kernel=kernel, degree=self.degree, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self._gamma)
 
-        # In binary case, we need to flip the sign of coef, intercept and
-        # decision function.
-        if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
-            return -dec_func.ravel()
+    def _sparse_decision_function(self, X):
+        X.data = np.asarray(X.data, dtype=np.float64, order='C')
 
-        return dec_func
+        kernel = self.kernel
+        if hasattr(kernel, '__call__'):
+            kernel = 'precomputed'
+
+        kernel_type = self._sparse_kernels.index(kernel)
+
+        return libsvm_sparse.libsvm_sparse_decision_function(
+            X.data, X.indices, X.indptr,
+            self.support_vectors_.data,
+            self.support_vectors_.indices,
+            self.support_vectors_.indptr,
+            self.dual_coef_.data, self._intercept_,
+            LIBSVM_IMPL.index(self.impl), kernel_type,
+            self.degree, self.gamma, self.coef0, self.tol,
+            self.C, self.class_weight_,
+            self.nu, self.epsilon, self.shrinking,
+            self.probability, self.n_support_, self._label,
+            self.probA_, self.probB_)
 
     def _validate_for_predict(self, X):
         check_is_fitted(self, 'support_')
-        
+
         X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
@@ -609,17 +638,17 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
     """
 
     _solver_type_dict = {
-        'PL2_LLR_D0': 0,  # L2 penalty, logistic regression
-        'PL2_LL2_D1': 1,  # L2 penalty, L2 loss, dual form
-        'PL2_LL2_D0': 2,  # L2 penalty, L2 loss, primal form
-        'PL2_LL1_D1': 3,  # L2 penalty, L1 Loss, dual form
-        'MC_SVC': 4,      # Multi-class Support Vector Classification
-        'PL1_LL2_D0': 5,  # L1 penalty, L2 Loss, primal form
-        'PL1_LLR_D0': 6,  # L1 penalty, logistic regression
-        'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
-        'PL2_LSE_D0': 11, # L2 penalty, squared epsilon-insensitive loss, primal form
-        'PL2_LSE_D1': 12, # L2 penalty, squared epsilon-insensitive loss, dual form
-        'PL2_LEI_D1': 13, # L2 penalty, epsilon-insensitive loss, dual form
+        'PL2_LLR_D0': 0,   # L2 penalty, logistic regression
+        'PL2_LL2_D1': 1,   # L2 penalty, L2 loss, dual form
+        'PL2_LL2_D0': 2,   # L2 penalty, L2 loss, primal form
+        'PL2_LL1_D1': 3,   # L2 penalty, L1 Loss, dual form
+        'MC_SVC': 4,       # Multi-class Support Vector Classification
+        'PL1_LL2_D0': 5,   # L1 penalty, L2 Loss, primal form
+        'PL1_LLR_D0': 6,   # L1 penalty, logistic regression
+        'PL2_LLR_D1': 7,   # L2 penalty, logistic regression, dual form
+        'PL2_LSE_D0': 11,  # L2 penalty, squared epsilon-insensitive loss, primal form
+        'PL2_LSE_D1': 12,  # L2 penalty, squared epsilon-insensitive loss, dual form
+        'PL2_LEI_D1': 13,  # L2 penalty, epsilon-insensitive loss, dual form
     }
 
     if multi_class == 'crammer_singer':
@@ -630,7 +659,7 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
     else:
         raise ValueError("`multi_class` must be one of `ovr`, "
                          "`crammer_singer`, got %r" % multi_class)
-    if not solver_type in _solver_type_dict:
+    if solver_type not in _solver_type_dict:
         if penalty.upper() == 'L1' and loss.upper() == 'L1':
             error_string = ("The combination of penalty='l1' "
                             "and loss='l1' is not supported.")
@@ -763,11 +792,10 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     # LibLinear wants targets as doubles, even for classification
     y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
     solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)
-    raw_coef_, n_iter_  = liblinear.train_wrap(
+    raw_coef_, n_iter_ = liblinear.train_wrap(
         X, y_ind, sp.isspmatrix(X), solver_type, tol, bias, C,
         class_weight_, max_iter, rnd.randint(np.iinfo('i').max),
-        epsilon
-        )
+        epsilon)
     # Regarding rnd.randint(..) in the above signature:
     # seed for srand in range [0..INT_MAX); due to limitations in Numpy
     # on 32-bit platforms, we can't get to the UINT_MAX limit that
