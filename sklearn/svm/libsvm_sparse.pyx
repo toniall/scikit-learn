@@ -361,7 +361,6 @@ def libsvm_sparse_decision_function(
     np.ndarray[np.float64_t, ndim=1] class_weight,
     double nu, double p, int shrinking, int probability,
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] label,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB):
     """

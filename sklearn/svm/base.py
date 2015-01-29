@@ -360,8 +360,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         X = self._validate_for_predict(X)
         X = self._compute_kernel(X)
 
-        X = self._validate_for_predict(X)
-
         if self._sparse:
             dec_func = self._sparse_decision_function(X)
         else:
@@ -369,7 +367,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function.
-        if self.impl != 'one_class' and len(self.classes_) == 2:
+        if self._impl != 'one_class' and len(self.classes_) == 2:
             return -dec_func
 
         return dec_func
@@ -404,11 +402,11 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.support_vectors_.indices,
             self.support_vectors_.indptr,
             self.dual_coef_.data, self._intercept_,
-            LIBSVM_IMPL.index(self.impl), kernel_type,
+            LIBSVM_IMPL.index(self._impl), kernel_type,
             self.degree, self.gamma, self.coef0, self.tol,
             self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
-            self.probability, self.n_support_, self._label,
+            self.probability, self.n_support_,
             self.probA_, self.probB_)
 
     def _validate_for_predict(self, X):
