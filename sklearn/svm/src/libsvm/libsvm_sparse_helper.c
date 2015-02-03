@@ -327,7 +327,7 @@ void copy_intercept(char *data, struct svm_csr_model *model, npy_intp *dims)
     }
 }
 
-void copy_support (char *data, struct svm_model *model)
+void copy_support (char *data, struct svm_csr_model *model)
 {
     memcpy (data, model->sv_ind, (model->l) * sizeof(int));
 }

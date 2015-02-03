@@ -403,7 +403,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.support_vectors_.indptr,
             self.dual_coef_.data, self._intercept_,
             LIBSVM_IMPL.index(self._impl), kernel_type,
-            self.degree, self.gamma, self.coef0, self.tol,
+            self.degree, self._gamma, self.coef0, self.tol,
             self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
             self.probability, self.n_support_,
