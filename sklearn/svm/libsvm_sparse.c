@@ -1116,6 +1116,7 @@ static char __pyx_k_probB[] = "probB";
 static char __pyx_k_range[] = "range";
 static char __pyx_k_scipy[] = "scipy";
 static char __pyx_k_utils[] = "utils";
+static char __pyx_k_zeros[] = "zeros";
 static char __pyx_k_SV_len[] = "SV_len";
 static char __pyx_k_T_data[] = "T_data";
 static char __pyx_k_arange[] = "arange";
@@ -1266,6 +1267,7 @@ static PyObject *__pyx_n_s_utils;
 static PyObject *__pyx_n_s_values;
 static PyObject *__pyx_n_s_verbosity;
 static PyObject *__pyx_n_s_warnings;
+static PyObject *__pyx_n_s_zeros;
 static PyObject *__pyx_int_0;
 static PyObject *__pyx_int_1;
 static PyObject *__pyx_tuple_;
@@ -4849,29 +4851,29 @@ static PyObject *__pyx_pf_7sklearn_3svm_13libsvm_sparse_6libsvm_sparse_decision_
  *         n_class = get_nr(model)
  *         n_class = n_class * (n_class - 1) / 2             # <<<<<<<<<<<<<<
  * 
- *     dec_values = np.empty((T_indptr.shape[0] - 1, n_class), dtype=np.float64)
+ *     #dec_values = np.empty((T_indptr.shape[0] - 1, n_class), dtype=np.float64)
  */
     __pyx_v_n_class = __Pyx_div_long((__pyx_v_n_class * (__pyx_v_n_class - 1)), 2);
   }
   __pyx_L3:;
 
-  /* "sklearn/svm/libsvm_sparse.pyx":398
- *         n_class = n_class * (n_class - 1) / 2
+  /* "sklearn/svm/libsvm_sparse.pyx":399
  * 
- *     dec_values = np.empty((T_indptr.shape[0] - 1, n_class), dtype=np.float64)             # <<<<<<<<<<<<<<
+ *     #dec_values = np.empty((T_indptr.shape[0] - 1, n_class), dtype=np.float64)
+ *     dec_values = np.zeros((T_indptr.shape[0] - 1, n_class), dtype=np.float64)             # <<<<<<<<<<<<<<
  *     if csr_copy_predict_values(T_data.shape, T_data.data,
  *                         T_indices.shape, T_indices.data,
  */
-  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 398; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 399; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_empty); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 398; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_zeros); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 399; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyInt_From_long(((__pyx_v_T_indptr->dimensions[0]) - 1)); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 398; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_PyInt_From_long(((__pyx_v_T_indptr->dimensions[0]) - 1)); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 399; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_3 = __Pyx_PyInt_From_Py_intptr_t(__pyx_v_n_class); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 398; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = __Pyx_PyInt_From_Py_intptr_t(__pyx_v_n_class); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 399; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 398; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 399; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_5);
   __Pyx_GIVEREF(__pyx_t_5);
@@ -4879,26 +4881,26 @@ static PyObject *__pyx_pf_7sklearn_3svm_13libsvm_sparse_6libsvm_sparse_decision_
   __Pyx_GIVEREF(__pyx_t_3);
   __pyx_t_5 = 0;
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 398; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 399; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_2);
   __pyx_t_2 = 0;
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 398; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 399; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 398; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_5)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 399; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_float64); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 398; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_float64); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 399; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 398; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_4) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 399; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 398; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 399; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 398; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_5numpy_ndarray))))) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 399; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __pyx_t_8 = ((PyArrayObject *)__pyx_t_4);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
@@ -4914,37 +4916,37 @@ static PyObject *__pyx_pf_7sklearn_3svm_13libsvm_sparse_6libsvm_sparse_decision_
       }
     }
     __pyx_pybuffernd_dec_values.diminfo[0].strides = __pyx_pybuffernd_dec_values.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_dec_values.diminfo[0].shape = __pyx_pybuffernd_dec_values.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_dec_values.diminfo[1].strides = __pyx_pybuffernd_dec_values.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_dec_values.diminfo[1].shape = __pyx_pybuffernd_dec_values.rcbuffer->pybuffer.shape[1];
-    if (unlikely(__pyx_t_9 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 398; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    if (unlikely(__pyx_t_9 < 0)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 399; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
   __pyx_t_8 = 0;
   __pyx_v_dec_values = ((PyArrayObject *)__pyx_t_4);
   __pyx_t_4 = 0;
 
-  /* "sklearn/svm/libsvm_sparse.pyx":402
+  /* "sklearn/svm/libsvm_sparse.pyx":403
  *                         T_indices.shape, T_indices.data,
  *                         T_indptr.shape, T_indptr.data,
- *                         model, dec_values.data) < 0:             # <<<<<<<<<<<<<<
+ *                         model, dec_values.data, n_class) < 0:             # <<<<<<<<<<<<<<
  *         raise MemoryError("We've run out of of memory")
  *     # free model and param
  */
-  __pyx_t_7 = ((csr_copy_predict_values(__pyx_v_T_data->dimensions, __pyx_v_T_data->data, __pyx_v_T_indices->dimensions, __pyx_v_T_indices->data, __pyx_v_T_indptr->dimensions, __pyx_v_T_indptr->data, __pyx_v_model, __pyx_v_dec_values->data) < 0) != 0);
+  __pyx_t_7 = ((csr_copy_predict_values(__pyx_v_T_data->dimensions, __pyx_v_T_data->data, __pyx_v_T_indices->dimensions, __pyx_v_T_indices->data, __pyx_v_T_indptr->dimensions, __pyx_v_T_indptr->data, __pyx_v_model, __pyx_v_dec_values->data, __pyx_v_n_class) < 0) != 0);
   if (__pyx_t_7) {
 
-    /* "sklearn/svm/libsvm_sparse.pyx":403
+    /* "sklearn/svm/libsvm_sparse.pyx":404
  *                         T_indptr.shape, T_indptr.data,
- *                         model, dec_values.data) < 0:
+ *                         model, dec_values.data, n_class) < 0:
  *         raise MemoryError("We've run out of of memory")             # <<<<<<<<<<<<<<
  *     # free model and param
  *     free_model_SV(model)
  */
-    __pyx_t_4 = __Pyx_PyObject_Call(__pyx_builtin_MemoryError, __pyx_tuple__8, NULL); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 403; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    __pyx_t_4 = __Pyx_PyObject_Call(__pyx_builtin_MemoryError, __pyx_tuple__8, NULL); if (unlikely(!__pyx_t_4)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 404; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_Raise(__pyx_t_4, 0, 0, 0);
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 403; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+    {__pyx_filename = __pyx_f[0]; __pyx_lineno = 404; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   }
 
-  /* "sklearn/svm/libsvm_sparse.pyx":405
+  /* "sklearn/svm/libsvm_sparse.pyx":406
  *         raise MemoryError("We've run out of of memory")
  *     # free model and param
  *     free_model_SV(model)             # <<<<<<<<<<<<<<
@@ -4953,7 +4955,7 @@ static PyObject *__pyx_pf_7sklearn_3svm_13libsvm_sparse_6libsvm_sparse_decision_
  */
   free_model_SV(__pyx_v_model);
 
-  /* "sklearn/svm/libsvm_sparse.pyx":406
+  /* "sklearn/svm/libsvm_sparse.pyx":407
  *     # free model and param
  *     free_model_SV(model)
  *     free_model(model)             # <<<<<<<<<<<<<<
@@ -4962,7 +4964,7 @@ static PyObject *__pyx_pf_7sklearn_3svm_13libsvm_sparse_6libsvm_sparse_decision_
  */
   free_model(__pyx_v_model);
 
-  /* "sklearn/svm/libsvm_sparse.pyx":407
+  /* "sklearn/svm/libsvm_sparse.pyx":408
  *     free_model_SV(model)
  *     free_model(model)
  *     free_param(param)             # <<<<<<<<<<<<<<
@@ -4971,7 +4973,7 @@ static PyObject *__pyx_pf_7sklearn_3svm_13libsvm_sparse_6libsvm_sparse_decision_
  */
   free_param(__pyx_v_param);
 
-  /* "sklearn/svm/libsvm_sparse.pyx":409
+  /* "sklearn/svm/libsvm_sparse.pyx":410
  *     free_param(param)
  * 
  *     return dec_values             # <<<<<<<<<<<<<<
@@ -5041,7 +5043,7 @@ static PyObject *__pyx_pf_7sklearn_3svm_13libsvm_sparse_6libsvm_sparse_decision_
   return __pyx_r;
 }
 
-/* "sklearn/svm/libsvm_sparse.pyx":414
+/* "sklearn/svm/libsvm_sparse.pyx":415
  * 
  * 
  * def set_verbosity_wrap(int verbosity):             # <<<<<<<<<<<<<<
@@ -5062,7 +5064,7 @@ static PyObject *__pyx_pw_7sklearn_3svm_13libsvm_sparse_9set_verbosity_wrap(PyOb
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("set_verbosity_wrap (wrapper)", 0);
   assert(__pyx_arg_verbosity); {
-    __pyx_v_verbosity = __Pyx_PyInt_As_int(__pyx_arg_verbosity); if (unlikely((__pyx_v_verbosity == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 414; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
+    __pyx_v_verbosity = __Pyx_PyInt_As_int(__pyx_arg_verbosity); if (unlikely((__pyx_v_verbosity == (int)-1) && PyErr_Occurred())) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 415; __pyx_clineno = __LINE__; goto __pyx_L3_error;}
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -5082,14 +5084,14 @@ static PyObject *__pyx_pf_7sklearn_3svm_13libsvm_sparse_8set_verbosity_wrap(CYTH
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("set_verbosity_wrap", 0);
 
-  /* "sklearn/svm/libsvm_sparse.pyx":418
+  /* "sklearn/svm/libsvm_sparse.pyx":419
  *     Control verbosity of libsvm library
  *     """
  *     set_verbosity(verbosity)             # <<<<<<<<<<<<<<
  */
   set_verbosity(__pyx_v_verbosity);
 
-  /* "sklearn/svm/libsvm_sparse.pyx":414
+  /* "sklearn/svm/libsvm_sparse.pyx":415
  * 
  * 
  * def set_verbosity_wrap(int verbosity):             # <<<<<<<<<<<<<<
@@ -7212,6 +7214,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_values, __pyx_k_values, sizeof(__pyx_k_values), 0, 0, 1, 1},
   {&__pyx_n_s_verbosity, __pyx_k_verbosity, sizeof(__pyx_k_verbosity), 0, 0, 1, 1},
   {&__pyx_n_s_warnings, __pyx_k_warnings, sizeof(__pyx_k_warnings), 0, 0, 1, 1},
+  {&__pyx_n_s_zeros, __pyx_k_zeros, sizeof(__pyx_k_zeros), 0, 0, 1, 1},
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
@@ -7305,14 +7308,14 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__7);
   __Pyx_GIVEREF(__pyx_tuple__7);
 
-  /* "sklearn/svm/libsvm_sparse.pyx":403
+  /* "sklearn/svm/libsvm_sparse.pyx":404
  *                         T_indptr.shape, T_indptr.data,
- *                         model, dec_values.data) < 0:
+ *                         model, dec_values.data, n_class) < 0:
  *         raise MemoryError("We've run out of of memory")             # <<<<<<<<<<<<<<
  *     # free model and param
  *     free_model_SV(model)
  */
-  __pyx_tuple__8 = PyTuple_Pack(1, __pyx_kp_s_We_ve_run_out_of_of_memory); if (unlikely(!__pyx_tuple__8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 403; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__8 = PyTuple_Pack(1, __pyx_kp_s_We_ve_run_out_of_of_memory); if (unlikely(!__pyx_tuple__8)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 404; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__8);
   __Pyx_GIVEREF(__pyx_tuple__8);
 
@@ -7430,17 +7433,17 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(__pyx_tuple__21);
   __pyx_codeobj__22 = (PyObject*)__Pyx_PyCode_New(23, 0, 28, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__21, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_andy_checkout_scikit_learn, __pyx_n_s_libsvm_sparse_decision_function, 349, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__22)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 349; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
 
-  /* "sklearn/svm/libsvm_sparse.pyx":414
+  /* "sklearn/svm/libsvm_sparse.pyx":415
  * 
  * 
  * def set_verbosity_wrap(int verbosity):             # <<<<<<<<<<<<<<
  *     """
  *     Control verbosity of libsvm library
  */
-  __pyx_tuple__23 = PyTuple_Pack(2, __pyx_n_s_verbosity, __pyx_n_s_verbosity); if (unlikely(!__pyx_tuple__23)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 414; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_tuple__23 = PyTuple_Pack(2, __pyx_n_s_verbosity, __pyx_n_s_verbosity); if (unlikely(!__pyx_tuple__23)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 415; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_tuple__23);
   __Pyx_GIVEREF(__pyx_tuple__23);
-  __pyx_codeobj__24 = (PyObject*)__Pyx_PyCode_New(1, 0, 2, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__23, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_andy_checkout_scikit_learn, __pyx_n_s_set_verbosity_wrap, 414, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__24)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 414; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_codeobj__24 = (PyObject*)__Pyx_PyCode_New(1, 0, 2, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__23, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_andy_checkout_scikit_learn, __pyx_n_s_set_verbosity_wrap, 415, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__24)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 415; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -7675,16 +7678,16 @@ PyMODINIT_FUNC PyInit_libsvm_sparse(void)
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_libsvm_sparse_decision_function, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 349; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "sklearn/svm/libsvm_sparse.pyx":414
+  /* "sklearn/svm/libsvm_sparse.pyx":415
  * 
  * 
  * def set_verbosity_wrap(int verbosity):             # <<<<<<<<<<<<<<
  *     """
  *     Control verbosity of libsvm library
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_3svm_13libsvm_sparse_9set_verbosity_wrap, NULL, __pyx_n_s_sklearn_svm_libsvm_sparse); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 414; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_7sklearn_3svm_13libsvm_sparse_9set_verbosity_wrap, NULL, __pyx_n_s_sklearn_svm_libsvm_sparse); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 415; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_set_verbosity_wrap, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 414; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_set_verbosity_wrap, __pyx_t_1) < 0) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 415; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "sklearn/svm/libsvm_sparse.pyx":1
