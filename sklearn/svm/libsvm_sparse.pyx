@@ -39,7 +39,7 @@ cdef extern from "libsvm_sparse_helper.c":
     int copy_predict (char *, svm_csr_model *, np.npy_intp *, char *)
     int csr_copy_predict_values (np.npy_intp *data_size, char *data, np.npy_intp *index_size,
         	char *index, np.npy_intp *intptr_size, char *size,
-                svm_csr_model *model, char *dec_values)
+                svm_csr_model *model, char *dec_values, int nr_class)
     int csr_copy_predict (np.npy_intp *data_size, char *data, np.npy_intp *index_size,
         	char *index, np.npy_intp *intptr_size, char *size,
                 svm_csr_model *model, char *dec_values) nogil
@@ -399,7 +399,7 @@ def libsvm_sparse_decision_function(
     if csr_copy_predict_values(T_data.shape, T_data.data,
                         T_indices.shape, T_indices.data,
                         T_indptr.shape, T_indptr.data,
-                        model, dec_values.data) < 0:
+                        model, dec_values.data, n_class) < 0:
         raise MemoryError("We've run out of of memory")
     # free model and param
     free_model_SV(model)
