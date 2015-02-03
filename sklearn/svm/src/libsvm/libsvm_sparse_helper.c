@@ -27,6 +27,7 @@ struct svm_csr_node **csr_to_libsvm (double *values, int* indices, int* indptr, 
         }
 
         for (j=0; j<n; ++j) {
+            /*printf("value %d: %f\n", j, values[k]);*/
             temp[j].value = values[k];
             temp[j].index = indices[k] + 1; /* libsvm uses 1-based indexing */
             ++k;

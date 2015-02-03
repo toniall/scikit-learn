@@ -432,6 +432,27 @@ double Kernel::dot(const PREFIX(node) *px, const PREFIX(node) *py)
 }
 #endif
 
+#ifdef _DENSE_REP
+void print_node(const PREFIX(node) *px)
+{
+	for (int i = 0; i < px->dim; i++)
+        printf("dense x[%d] = %f ", i, px->values[i]);
+    printf("\n");
+    
+}
+#else
+void print_node(const PREFIX(node) *px)
+{
+    while(px->index != -1)
+    {
+        printf("x[%d] = %f ", px->index, px->value);
+        ++px;
+    }
+    printf("\n");
+    
+}
+#endif
+
 double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			  const svm_parameter& param)
 {
@@ -440,6 +461,7 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 		case LINEAR:
 			return dot(x,y);
 		case POLY:
+            printf("gamma: %f coef0: %f degree: %d\n", param.gamma, param.coef0, param.degree);
 			return powi(param.gamma*dot(x,y)+param.coef0,param.degree);
 		case RBF:
 		{
@@ -2815,12 +2837,26 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 		int l = model->l;
 		
 		double *kvalue = Malloc(double,l);
-		for(i=0;i<l;i++)
+		for(i=0;i<l;i++){
 #ifdef _DENSE_REP
-                    kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV+i,model->param);
+                kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV+i,model->param);
+                printf("kvalue[%d] = %f", i, kvalue[i]);
+                printf("x\n");
+                svm::print_node(x);
+                printf("sv[i]\n");
+                svm::print_node(model->SV + i);
+                printf("kernel_type: %d\n", model->param.kernel_type);
 #else
                 kvalue[i] = NAMESPACE::Kernel::k_function(x,model->SV[i],model->param);
+                printf("kvalue[%d] = %f", i, kvalue[i]);
+                printf("x\n");
+                svm_csr::print_node(x);
+                printf("sv[i]\n");
+                svm_csr::print_node(model->SV[i]);
+                printf("kernel_type: %d\n", model->param.kernel_type);
 #endif
+        }
+
 
 		int *start = Malloc(int,nr_class);
 		start[0] = 0;
@@ -2849,7 +2885,16 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 				for(k=0;k<cj;k++)
 					sum += coef2[sj+k] * kvalue[sj+k];
 				sum -= model->rho[p];
+                //printf("coef[i][0]: %f\n", model->sv_coef[i][si]);
+                //printf("kvalue[si]: %f\n", kvalue[si]);
+                //printf("kvalue[sj]: %f\n", kvalue[sj]);
+
 				dec_values[p] = sum;
+#ifdef _DENSE_REP
+                printf("WTF DENSE p: %d, sum: %f\n", p, sum);
+#else
+                printf("WTF SPARSE p: %d, sum: %f\n", p, sum);
+#endif
 
 				if(dec_values[p] > 0)
 					++vote[i];
