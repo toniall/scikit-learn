@@ -57,6 +57,7 @@ SETUPTOOLS_COMMANDS = set([
 
 if len(SETUPTOOLS_COMMANDS.intersection(sys.argv)) > 0:
     import setuptools
+    setuptools
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
@@ -106,6 +107,12 @@ def configuration(parent_package='', top_path=None):
 
 
 def setup_package():
+    try:
+        import numpy
+        numpy
+    except:
+        build_requires = ['numpy>=1.6.2']
+
     metadata = dict(name=DISTNAME,
                     maintainer=MAINTAINER,
                     maintainer_email=MAINTAINER_EMAIL,
@@ -114,6 +121,8 @@ def setup_package():
                     url=URL,
                     version=VERSION,
                     download_url=DOWNLOAD_URL,
+                    setup_requires=build_requires,
+                    install_requires=build_requires,
                     long_description=LONG_DESCRIPTION,
                     classifiers=['Intended Audience :: Science/Research',
                                  'Intended Audience :: Developers',
@@ -143,7 +152,7 @@ def setup_package():
         # For these actions, NumPy is not required.
         #
         # They are required to succeed without Numpy for example when
-        # pip is used to install Scikit when Numpy is not yet present in
+        # pip is used to install Scikit-Learn when Numpy is not yet present in
         # the system.
         try:
             from setuptools import setup
