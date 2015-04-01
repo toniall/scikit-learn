@@ -15,6 +15,7 @@ from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
@@ -44,6 +45,12 @@ from sklearn.datasets import load_iris, load_boston, make_blobs
 
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
+
+mesg1 = "Found arrays with inconsistent numbers of samples"
+mesg2 = "X and y have incompatible shapes"
+mesg3 = "X and y have inconsistent dimensions"
+mesg4 = "Number of labels=.* does not match number of samples=.*"
+samples_mismatch_regexp = mesg1 + "|" + mesg2 + "|" + mesg3 + "|" + mesg4
 
 
 def _boston_subset(n_samples=200):
@@ -589,7 +596,8 @@ def check_classifiers_train(name, Classifier):
         set_fast_parameters(classifier)
         set_random_state(classifier)
         # raises error on malformed input for fit
-        assert_raises(ValueError, classifier.fit, X, y[:-1])
+        assert_raises_regexp(ValueError, samples_mismatch_regexp,
+                             classifier.fit, X, y[:-1])
 
         # fit
         classifier.fit(X, y)
@@ -796,7 +804,8 @@ def check_regressors_train(name, Regressor):
         regressor.C = 0.01
 
     # raises error on malformed input for fit
-    assert_raises(ValueError, regressor.fit, X, y[:-1])
+    assert_raises_regexp(ValueError, samples_mismatch_regexp, regressor.fit, X,
+                         y[:-1])
     # fit
     if name in CROSS_DECOMPOSITION:
         y_ = np.vstack([y, 2 * y + rnd.randint(2, size=len(y))])

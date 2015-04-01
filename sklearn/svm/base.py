@@ -9,7 +9,7 @@ from . import libsvm, liblinear
 from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
-from ..utils import check_array, check_random_state, column_or_1d
+from ..utils import check_array, check_random_state, column_or_1d, check_consistent_length
 from ..utils import ConvergenceWarning, compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
@@ -145,20 +145,14 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         solver_type = LIBSVM_IMPL.index(self._impl)
 
         # input validation
-        if solver_type != 2 and X.shape[0] != y.shape[0]:
-            raise ValueError("X and y have incompatible shapes.\n" +
-                             "X has %s samples, but y has %s." %
-                             (X.shape[0], y.shape[0]))
+        if solver_type != 2:
+            check_consistent_length(X, y)
 
         if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
             raise ValueError("X.shape[0] should be equal to X.shape[1]")
 
-        if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
-            raise ValueError("sample_weight and X have incompatible shapes: "
-                             "%r vs %r\n"
-                             "Note: Sparse matrices cannot be indexed w/"
-                             "boolean masks (use `indices=True` in CV)."
-                             % (sample_weight.shape, X.shape))
+        if sample_weight.shape[0] > 0:
+            check_consistent_length(X, sample_weight)
 
         if (self.kernel in ['poly', 'rbf']) and (self.gamma == 0):
             # if custom gamma is not provided ...
