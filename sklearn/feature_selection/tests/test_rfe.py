@@ -162,6 +162,7 @@ def test_rfecv():
     generator = check_random_state(0)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    assert_equal(X.shape, (150, 10))
     y = list(iris.target)   # regression test: list should be supported
 
     # Test using the score function
@@ -178,6 +179,7 @@ def test_rfecv():
     # same in sparse
     rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5)
     X_sparse = sparse.csr_matrix(X)
+    assert_equal(X_sparse.shape, X.shape)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
     assert_array_equal(X_r_sparse.toarray(), iris.data)
