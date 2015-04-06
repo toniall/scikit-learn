@@ -429,8 +429,9 @@ class RFECV(RFE, MetaEstimatorMixin):
             # Compute a full ranking of the features
             # ranking_ contains the same set of values for all CV folds,
             # but perhaps reordered
-            rfe._fit(X_train, y_train, self._step_score_on_test(X_test,
-                     y_test, scorer))
+            rfe._fit(X_train, y_train,
+                     lambda estimator, support:
+                     _score(estimator, X_test[:, support], y_test, scorer))
             scores += rfe.scores_
 
         # The index in scores when 'n_features' features is selected
@@ -460,8 +461,3 @@ class RFECV(RFE, MetaEstimatorMixin):
         # here, the scores are normalized by len(cv)
         self.grid_scores_ = scores / len(cv)
         return self
-
-    @staticmethod
-    def _step_score_on_test(X_test, y_test, scorer):
-        return lambda estimator, support: _score(estimator, X_test[:, support],
-                                                 y_test, scorer)
