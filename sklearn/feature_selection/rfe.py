@@ -151,11 +151,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         ranking_ = np.ones(n_features, dtype=np.int)
 
         if step_score:
-            # Determine the number of subsets of features
-            self.scores_ = np.zeros(
-                int(np.ceil(
-                    (n_features - n_features_to_select) /
-                    float(self.step))) + 1)
+            self.scores_ = []
+
         # Elimination
         while np.sum(support_) > n_features_to_select:
             # Remaining features
@@ -196,7 +193,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             # because 'estimator' must use features
             # that have not been eliminated yet
             if step_score:
-                self._do_step_score(step_score, estimator, support_)
+                self.scores_.append(step_score(estimator, support_))
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1
 
@@ -208,32 +205,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         # Compute step score when only n_features_to_select features left
         if step_score:
-            self._do_step_score(step_score, self.estimator_, support_)
+            self.scores_.append(step_score(self.estimator_, support_))
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
 
-        return self
-
-    def _do_step_score(self, step_score, estimator, support):
-        """Evaluate the score of trained estimator using a subset of features
-
-        Parameters
-        ----------
-
-        step_score : function computes the score which takes estimator and
-                     support to evaluate
-
-        estimator : trained estimator
-
-        support : 1D vector of shape [n_features, ]
-                  The indicator of used features
-        """
-        score_index = int(
-            np.ceil(
-                (np.sum(support) - self.n_features_to_select) /
-                float(self.step)))
-        self.scores_[score_index] = step_score(estimator, support)
         return self
 
     @if_delegate_has_method(delegate='estimator')
@@ -414,8 +390,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         n_features_to_select = 1
 
         # Determine the number of subsets of features
-        scores = np.zeros(int(np.ceil((n_features - n_features_to_select) /
-                                      float(self.step))) + 1)
+        scores = []
 
         # Cross-validation
         for n, (train, test) in enumerate(cv):
@@ -432,8 +407,8 @@ class RFECV(RFE, MetaEstimatorMixin):
             rfe._fit(X_train, y_train,
                      lambda estimator, support:
                      _score(estimator, X_test[:, support], y_test, scorer))
-            scores += rfe.scores_
-
+            scores.append(np.array(rfe.scores_[::-1]).reshape(1, -1))
+        scores = np.sum(np.concatenate(scores, 0), 0)
         # The index in scores when 'n_features' features is selected
         n_feature_index = np.ceil((n_features - n_features_to_select) /
                                   float(self.step))
