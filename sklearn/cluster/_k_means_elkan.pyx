@@ -13,7 +13,6 @@ cimport cython
 from libc.math cimport sqrt
 
 from ..metrics import euclidean_distances
-from .k_means_ import _tolerance
 from ._k_means import _centers_dense
 
 
@@ -32,10 +31,8 @@ cdef double d(double* a, double* b, int n_features) nogil:
         result += tmp * tmp
     return sqrt(result)
 
-
 cdef assign_labels(double* X, double* centers, double[:, :]
                    center_distances, int[:] labels, double[:, :] lower_bounds, double[:] distances, int n_samples, int n_features, int n_clusters):
-    print("start assign labels")
     # assigns closest center to X
     # uses triangle inequality
     cdef double* x
@@ -58,12 +55,10 @@ cdef assign_labels(double* X, double* centers, double[:, :]
                     c_x = j
         labels[sample] = c_x
         distances[sample] = d_c
-    print("end assign labels")
 
 
 def k_means_elkan(X_, int n_clusters, init, float tol=1e-4, int max_iter=30, verbose=False):
     #initialize
-    tol = _tolerance(X_, tol)
     centers_ = init
     cdef double* centers_p = getfloatpointer(centers_)
     cdef double* X_p = getfloatpointer(X_)
@@ -83,11 +78,13 @@ def k_means_elkan(X_, int n_clusters, init, float tol=1e-4, int max_iter=30, ver
     cdef np.uint8_t[:] bounds_tight = np.ones(n_samples, dtype=np.uint8)
     cdef np.uint8_t[:] points_to_update = np.zeros(n_samples, dtype=np.uint8)
     for iteration in range(max_iter):
-        print("start iteration")
+        if verbose:
+            print("start iteration")
         # we could find the closest center in O(n) but
         # this does not seem to be the bottleneck
         distance_next_center = np.sort(center_distances, axis=0)[1]
-        print("done sorting")
+        if verbose:
+            print("done sorting")
         for point_index in range(n_samples):
             upper_bound = upper_bounds[point_index]
             label = labels[point_index]
@@ -114,7 +111,8 @@ def k_means_elkan(X_, int n_clusters, init, float tol=1e-4, int max_iter=30, ver
                             upper_bound = distance
             labels[point_index] = label
             upper_bounds[point_index] = upper_bound
-        print("end inner loop")
+        if verbose:
+            print("end inner loop")
         # compute new centers
         new_centers = _centers_dense(X_, labels_, n_clusters, upper_bounds_)
         bounds_tight = np.zeros(n_samples, dtype=np.uint8)
@@ -134,6 +132,7 @@ def k_means_elkan(X_, int n_clusters, init, float tol=1e-4, int max_iter=30, ver
                   % (iteration, np.sum((X_ - centers_[labels]) ** 2)))
 
         if np.sum(center_shift) < tol:
-            print("center shift within tolerance")
+            if verbose:
+                print("center shift within tolerance")
             break
     return centers_, labels

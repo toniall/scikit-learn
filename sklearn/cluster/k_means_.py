@@ -27,6 +27,7 @@ from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 
 from . import _k_means
+from ._k_means_elkan import k_means_elkan
 
 
 ###############################################################################
@@ -150,7 +151,8 @@ def _tolerance(X, tol):
 
 def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
             n_init=10, max_iter=300, verbose=False,
-            tol=1e-4, random_state=None, copy_x=True, n_jobs=1):
+            tol=1e-4, random_state=None, copy_x=True, n_jobs=1,
+            algorithm="lloyd"):
     """K-means clustering algorithm.
 
     Parameters
@@ -256,12 +258,19 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
     x_squared_norms = _squared_norms(X)
 
     best_labels, best_inertia, best_centers = None, None, None
+    if algorithm == "lloyd":
+        kmeans_single = _kmeans_single
+    elif algorithm == "elkan":
+        kmeans_single = _kmeans_single_elkan
+    else:
+        raise ValueError("Algorithm must be 'lloyd' or 'elkan', got"
+                         " %s" % str(algorithm))
     if n_jobs == 1:
         # For a single thread, less memory is needed if we just store one set
         # of the best results (as opposed to one set per run per thread).
         for it in range(n_init):
             # run a k-means once
-            labels, inertia, centers = _kmeans_single(
+            labels, inertia, centers = kmeans_single(
                 X, n_clusters, max_iter=max_iter, init=init, verbose=verbose,
                 precompute_distances=precompute_distances, tol=tol,
                 x_squared_norms=x_squared_norms, random_state=random_state)
@@ -274,12 +283,12 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
         # parallelisation of k-means runs
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
         results = Parallel(n_jobs=n_jobs, verbose=0)(
-            delayed(_kmeans_single)(X, n_clusters, max_iter=max_iter,
-                                    init=init, verbose=verbose, tol=tol,
-                                    precompute_distances=precompute_distances,
-                                    x_squared_norms=x_squared_norms,
-                                    # Change seed to ensure variety
-                                    random_state=seed)
+            delayed(kmeans_single)(X, n_clusters, max_iter=max_iter,
+                                   init=init, verbose=verbose, tol=tol,
+                                   precompute_distances=precompute_distances,
+                                   x_squared_norms=x_squared_norms,
+                                   # Change seed to ensure variety
+                                   random_state=seed)
             for seed in seeds)
         # Get results with the lowest inertia
         labels, inertia, centers = zip(*results)
@@ -293,6 +302,27 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
         best_centers += X_mean
 
     return best_centers, best_labels, best_inertia
+
+
+def _kmeans_single_elkan(X, n_clusters, max_iter=300,
+                         init='k-means++', verbose=False,
+                         x_squared_norms=None, random_state=None,
+                         tol=1e-4, precompute_distances=True):
+
+    tol = _tolerance(X, tol)
+    random_state = check_random_state(random_state)
+    if x_squared_norms is None:
+        x_squared_norms = _squared_norms(X)
+    # init
+    centers = _init_centroids(X, n_clusters, init, random_state=random_state,
+                              x_squared_norms=x_squared_norms)
+    if verbose:
+        print('Initialization complete')
+    centers, labels = k_means_elkan(X, n_clusters, centers,
+                                    tol=tol, max_iter=max_iter,
+                                    verbose=verbose)
+    inertia = np.sum((X - centers[labels]) ** 2)
+    return labels, inertia, centers
 
 
 def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
@@ -644,9 +674,10 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     """
 
-    def __init__(self, n_clusters=8, init='k-means++', n_init=10, max_iter=300,
-                 tol=1e-4, precompute_distances=True,
-                 verbose=0, random_state=None, copy_x=True, n_jobs=1):
+    def __init__(self, n_clusters=8, init='k-means++', n_init=10,
+                 max_iter=300, tol=1e-4, precompute_distances=True,
+                 verbose=0, random_state=None, copy_x=True,
+                 n_jobs=1, algorithm='lloyd'):
 
         if hasattr(init, '__array__'):
             n_clusters = init.shape[0]
@@ -662,6 +693,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self.random_state = random_state
         self.copy_x = copy_x
         self.n_jobs = n_jobs
+        self.algorithm = algorithm
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
@@ -679,7 +711,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             raise ValueError("Incorrect number of features. "
                              "Got %d features, expected %d" % (
                                  n_features, expected_n_features))
-        if not X.dtype.kind is 'f':
+        if X.dtype.kind != 'f':
             warnings.warn("Got data type %s, converted to float "
                           "to avoid overflows" % X.dtype,
                           RuntimeWarning, stacklevel=2)
@@ -706,7 +738,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             max_iter=self.max_iter, verbose=self.verbose,
             precompute_distances=self.precompute_distances,
             tol=self.tol, random_state=random_state, copy_x=self.copy_x,
-            n_jobs=self.n_jobs)
+            n_jobs=self.n_jobs, algorithm=self.algorithm)
         return self
 
     def fit_predict(self, X):
