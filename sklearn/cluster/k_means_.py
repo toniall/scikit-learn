@@ -152,7 +152,7 @@ def _tolerance(X, tol):
 def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
             n_init=10, max_iter=300, verbose=False,
             tol=1e-4, random_state=None, copy_x=True, n_jobs=1,
-            algorithm="lloyd"):
+            algorithm="auto"):
     """K-means clustering algorithm.
 
     Parameters
@@ -258,12 +258,14 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
     x_squared_norms = _squared_norms(X)
 
     best_labels, best_inertia, best_centers = None, None, None
+    if algorithm == "auto":
+        algorithm = "lloyd" if sp.issparse(X) else 'elkan'
     if algorithm == "lloyd":
         kmeans_single = _kmeans_single
     elif algorithm == "elkan":
         kmeans_single = _kmeans_single_elkan
     else:
-        raise ValueError("Algorithm must be 'lloyd' or 'elkan', got"
+        raise ValueError("Algorithm must be 'auto', 'lloyd' or 'elkan', got"
                          " %s" % str(algorithm))
     if n_jobs == 1:
         # For a single thread, less memory is needed if we just store one set
@@ -308,7 +310,9 @@ def _kmeans_single_elkan(X, n_clusters, max_iter=300,
                          init='k-means++', verbose=False,
                          x_squared_norms=None, random_state=None,
                          tol=1e-4, precompute_distances=True):
-
+    if sp.issparse(X):
+        raise ValueError("algorithm='elkan' not supported for"
+                         " sparse input X")
     tol = _tolerance(X, tol)
     random_state = check_random_state(random_state)
     if x_squared_norms is None:
