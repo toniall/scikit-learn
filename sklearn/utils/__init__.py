@@ -15,6 +15,7 @@ from .validation import (as_float_array,
                          check_symmetric, DataConversionWarning)
 from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
+from .plot_2d_decisions import plot_2d_decisions
 
 
 __all__ = ["murmurhash3_32", "as_float_array",
@@ -23,7 +24,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
            "check_consistent_length", "check_X_y", 'indexable',
-           "check_symmetric"]
+           "check_symmetric", "plot_2d_decisions"]
 
 
 class deprecated(object):
