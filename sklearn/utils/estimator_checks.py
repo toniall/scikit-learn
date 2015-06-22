@@ -859,7 +859,7 @@ def check_classifiers_classes(name, Classifier):
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     # We need to make sure that we have non negative data, for things
-    # like NMF
+    # like NaiveBayes
     X -= X.min() - .1
     y_names = np.array(["one", "two", "three"])[y]
 
@@ -888,6 +888,14 @@ def check_classifiers_classes(name, Classifier):
             print("Unexpected classes_ attribute for %r: "
                   "expected %s, got %s" %
                   (classifier, classes, classifier.classes_))
+
+    # Toy test to make sure we convert dtypes correctly
+    CLASSES = 15
+    X = np.eye(CLASSES)
+    y = [ch for ch in 'ABCDEFGHIJKLMNOPQRSTU'[:CLASSES]]
+
+    result = classifier.fit(X, y).predict(X)
+    assert_array_equal(result, y)
 
 
 def check_classifiers_pickle(name, Classifier):
