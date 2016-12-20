@@ -6,7 +6,6 @@
 import copy
 import warnings
 from uuid import uuid4
-from collections import Sequence
 
 import numpy as np
 from scipy import sparse
@@ -175,12 +174,14 @@ def _pprint(params, offset=0, printer=repr, cutoff=500):
 
 def _html_repr(thing):
     if hasattr(thing, "_repr_html_"):
-        return thing._repr_html_()
+        rep = "</div>" + thing._repr_html_() + "<div class='sklearn_continue' style='clear:left'>"
     elif isinstance(thing, tuple):
-        return "({})".format(", ". join([_html_repr(vv) for vv in thing]))
+        rep = "({})".format(", ". join([_html_repr(vv) for vv in thing]))
     elif isinstance(thing, list):
-        return "[{}]".format(", ". join([_html_repr(vv) for vv in thing]))
-    return repr(thing)
+        rep = "[{}]".format(", ". join([_html_repr(vv) for vv in thing]))
+    else:
+        rep = repr(thing)
+    return "{}".format(rep)
 
 
 ###############################################################################
@@ -329,10 +330,23 @@ class BaseEstimator(object):
             }});
 
             </script>""".format(this_id)
-        more_params_str = ", <a id='more_params_{0}'>...</a><span id='default_params_{0}'>, {1}</span>".format(
-            this_id, _pprint(default_params, printer=_html_repr, cutoff=None)) if default_params else ""
-        my_repr = "{}<b>{}</b>({}{})".format(js, class_name, _pprint(
-            changed_params, printer=_html_repr, cutoff=None), more_params_str)
+        if default_params:
+            more_params_str = (
+                "<a id='more_params_{0}'>...</a>"
+                "<span id='default_params_{0}'>, {1}</span>")
+            if changed_params:
+                more_params_str = ", " + more_params_str
+            more_params_str = more_params_str.format(
+                this_id, _pprint(default_params, printer=_html_repr,
+                                 cutoff=None))
+        else:
+            more_params_str = ""
+
+        my_repr = ("{}<div class='sklearn_est' style='float:left'><div class='sklearn_est_name' style='float:left'><b>{}</b>(</div>"
+                   "<div class='sklearn_est_params' style='overflow:auto'><div class='sklearn_inner_params' style='float:left'>{}{})</div></div></div>").format(
+                       js, class_name, _pprint(changed_params,
+                                               printer=_html_repr,
+                                               cutoff=None), more_params_str)
         if False:
             print_attributes = ['classes_', 'n_outputs_']
             for attr in print_attributes:
