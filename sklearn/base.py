@@ -174,7 +174,8 @@ def _pprint(params, offset=0, printer=repr, cutoff=500):
 
 def _html_repr(thing):
     if hasattr(thing, "_repr_html_"):
-        rep = "</div>" + thing._repr_html_() + "<div class='sklearn_continue' style='clear:left'>"
+        rep = ("</div>" + thing._repr_html_()
+               + "<div class='sklearn_continue' style='clear:left'>")
     elif isinstance(thing, tuple):
         rep = "({})".format(", ". join([_html_repr(vv) for vv in thing]))
     elif isinstance(thing, list):
@@ -342,8 +343,12 @@ class BaseEstimator(object):
         else:
             more_params_str = ""
 
-        my_repr = ("{}<div class='sklearn_est' style='float:left'><div class='sklearn_est_name' style='float:left'><b>{}</b>(</div>"
-                   "<div class='sklearn_est_params' style='overflow:auto'><div class='sklearn_inner_params' style='float:left'>{}{})</div></div></div>").format(
+        my_repr = ("{}<div class='sklearn_est' style='float:left'>"
+                   "<div class='sklearn_est_name' style='float:left'><b>{}</b>"
+                   "(</div>"
+                   "<div class='sklearn_est_params' style='overflow:auto'>"
+                   "<div class='sklearn_inner_params' style='float:left'>{}{})"
+                   "</div></div></div>").format(
                        js, class_name, _pprint(changed_params,
                                                printer=_html_repr,
                                                cutoff=None), more_params_str)
