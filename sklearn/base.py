@@ -175,7 +175,7 @@ def _pprint(params, offset=0, printer=repr, cutoff=500):
 def _html_repr(thing):
     if hasattr(thing, "_repr_html_"):
         rep = ("</div>" + thing._repr_html_()
-               + "<div class='sklearn_continue' style='clear:left'>")
+               + "<div class='sklearn_continue' style='display:inline-block'>")
     elif isinstance(thing, tuple):
         rep = "({})".format(", ". join([_html_repr(vv) for vv in thing]))
     elif isinstance(thing, list):
@@ -333,8 +333,8 @@ class BaseEstimator(object):
             </script>""".format(this_id)
         if default_params:
             more_params_str = (
-                "<a id='more_params_{0}'>...</a>"
-                "<span id='default_params_{0}'>, {1}</span>")
+                "<div style='display:inline-block'><a id='more_params_{0}'>...</a></div>"
+                "<div style='display:inline-block' id='default_params_{0}'>, {1}</div>")
             if changed_params:
                 more_params_str = ", " + more_params_str
             more_params_str = more_params_str.format(
@@ -343,11 +343,11 @@ class BaseEstimator(object):
         else:
             more_params_str = ""
 
-        my_repr = ("{}<div class='sklearn_est' style='float:left'>"
-                   "<div class='sklearn_est_name' style='float:left'><b>{}</b>"
+        my_repr = ("{}<div class='sklearn_est' style='display:inline-block; white-space:nowrap'>"
+                   "<div class='sklearn_est_name' style='display:inline-block'><b>{}</b>"
                    "(</div>"
-                   "<div class='sklearn_est_params' style='overflow:auto'>"
-                   "<div class='sklearn_inner_params' style='float:left'>{}{})"
+                   "<div class='sklearn_est_params' style='display:inline-block; vertical-align:top; white-space:nowrap'>"
+                   "<div class='sklearn_inner_params' style='display:inline-block; white-space: normal'>{}{})"
                    "</div></div></div>").format(
                        js, class_name, _pprint(changed_params,
                                                printer=_html_repr,
