@@ -3,7 +3,6 @@
 # Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 # License: 3-clause BSD
-descr = """A set of python modules for machine learning and data mining"""
 
 import sys
 import os
@@ -25,6 +24,7 @@ else:
 # machinery.
 builtins.__SKLEARN_SETUP__ = True
 
+descr = """A set of python modules for machine learning and data mining"""
 DISTNAME = 'scikit-learn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
 with open('README.rst') as f:
