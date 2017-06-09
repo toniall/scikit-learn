@@ -137,12 +137,16 @@ def _pprint(params, offset=0, printer=repr):
         the builtin str or repr
 
     """
+    import pdb
+    # pdb.set_trace()
     # Do a multi-line justified repr:
     options = np.get_printoptions()
     np.set_printoptions(precision=5, threshold=64, edgeitems=2)
     params_list = list()
     this_line_length = offset
-    line_sep = ',\n' + (1 + offset // 2) * ' '
+    # indent_spaces = (1 + offset // 2) * ' '
+    indent_spaces = 4 * ' '
+    line_sep = ',\n' + indent_spaces
     for i, (k, v) in enumerate(sorted(six.iteritems(params))):
         if type(v) is float:
             # use str for representing floating point numbers
@@ -156,11 +160,15 @@ def _pprint(params, offset=0, printer=repr):
             this_repr = this_repr[:300] + '...' + this_repr[-100:]
         if i > 0:
             if (this_line_length + len(this_repr) >= 75 or '\n' in this_repr):
+                # this repr is multi-line or long
                 params_list.append(line_sep)
                 this_line_length = len(line_sep)
             else:
                 params_list.append(', ')
                 this_line_length += 2
+        if "\n" in this_repr:
+            # indent stuff further
+            this_repr = this_repr.replace("\n", "\n" + indent_spaces)
         params_list.append(this_repr)
         this_line_length += len(this_repr)
 
@@ -314,7 +322,6 @@ class BaseEstimator(object):
             super(BaseEstimator, self).__setstate__(state)
         except AttributeError:
             self.__dict__.update(state)
-
 
 
 ###############################################################################
