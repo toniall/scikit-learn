@@ -56,6 +56,19 @@ New features
      multinomial logistic loss, and behaves marginally better than 'sag'
      during the first epochs of ridge and logistic regression.
      By `Arthur Mensch`_.
+     :issue:`8446` by `Arthur Mensch`_.
+
+   - Added :class:`preprocessing.QuantileTransformer` class and
+     :func:`preprocessing.quantile_transform` function for features
+     normalization based on quantiles.
+     :issue:`8363` by :user:`Denis Engemann <dengemann>`,
+     :user:`Guillaume Lemaitre <glemaitre>`, `Olivier Grisel`_, `Raghav RV`_,
+     :user:`Thierry Guillemot <tguillemot>`, and `Gael Varoquaux`_.
+
+   - Added :func:`metrics.dcg_score` and :func:`metrics.ndcg_score`, which
+     compute Discounted cumulative gain (DCG) and Normalized discounted
+     cumulative gain (NDCG).
+     :issue:`7739` by :user:`David Gasquez <davidgasquez>`.
 
 Enhancements
 ............
