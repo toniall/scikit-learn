@@ -110,7 +110,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Notes
     -----
-    See examples/linear_model/plot_bayesian_ridge.py for an example.
+    For an example, see :ref:`examples/linear_model/plot_bayesian_ridge.py
+    <sphx_glr_auto_examples_linear_model_plot_bayesian_ridge.py>`.
 
     References
     ----------
@@ -119,8 +120,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     R. Salakhutdinov, Lecture notes on Statistical Machine Learning,
     http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=15
-    Their beta is our self.alpha_
-    Their alpha is our self.lambda_
+    Their beta is our ``self.alpha_``
+    Their alpha is our ``self.lambda_``
     """
 
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
@@ -372,8 +373,9 @@ class ARDRegression(LinearModel, RegressorMixin):
     array([ 1.])
 
     Notes
-    --------
-    See examples/linear_model/plot_ard.py for an example.
+    -----
+    For an example, see :ref:`examples/linear_model/plot_ard.py
+    <sphx_glr_auto_examples_linear_model_plot_ard.py>`.
 
     References
     ----------
@@ -382,10 +384,10 @@ class ARDRegression(LinearModel, RegressorMixin):
 
     R. Salakhutdinov, Lecture notes on Statistical Machine Learning,
     http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=15
-    Their beta is our self.alpha_
-    Their alpha is our self.lambda_
+    Their beta is our ``self.alpha_``
+    Their alpha is our ``self.lambda_``
     ARD is a little different than the slide: only dimensions/features for
-    which self.lambda_ < self.threshold_lambda are kept and the rest are
+    which ``self.lambda_ < self.threshold_lambda`` are kept and the rest are
     discarded.
     """
 
