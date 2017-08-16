@@ -167,7 +167,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     2
 
     In the multilabel case with binary label indicators:
-    
+
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
@@ -1101,16 +1101,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
         if len(tp_bins):
             tp_sum = np.bincount(tp_bins, weights=tp_bins_weights,
-                              minlength=len(labels))
+                                 minlength=len(labels))
         else:
             # Pathological case
             true_sum = pred_sum = tp_sum = np.zeros(len(labels))
         if len(y_pred):
             pred_sum = np.bincount(y_pred, weights=sample_weight,
-                                minlength=len(labels))
+                                   minlength=len(labels))
         if len(y_true):
             true_sum = np.bincount(y_true, weights=sample_weight,
-                                minlength=len(labels))
+                                   minlength=len(labels))
 
         # Retain only selected labels
         indices = np.searchsorted(sorted_labels, labels[:n_labels])
@@ -1463,8 +1463,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     return report
 
 
-def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
-                 classes=None):
+def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -1489,13 +1488,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         Sample weights.
 
         .. versionadded:: 0.18
-
-    classes : array, shape = [n_labels], optional
-        Integer array of labels.
-
-        .. deprecated:: 0.18
-           This parameter has been deprecated in favor of ``labels`` in
-           version 0.18 and will be removed in 0.20. Use ``labels`` instead.
 
     Returns
     -------
@@ -1544,11 +1536,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
-    if classes is not None:
-        warnings.warn("'classes' was renamed to 'labels' in version 0.18 and "
-                      "will be removed in 0.20.", DeprecationWarning)
-        labels = classes
-
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
     if labels is None:
