@@ -21,9 +21,7 @@ from scipy.sparse.linalg import svds
 from ..externals import six
 
 from .base import _BasePCA
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import deprecated
-from ..utils import check_random_state, as_float_array
+from ..utils import check_random_state
 from ..utils import check_array
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
@@ -220,7 +218,7 @@ class PCA(_BasePCA):
     mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
-        Equal to `X.mean(axis=1)`.
+        Equal to `X.mean(axis=0)`.
 
     n_components_ : int
         The estimated number of components. When n_components is set
@@ -319,6 +317,8 @@ class PCA(_BasePCA):
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+
         Returns
         -------
         self : object
@@ -335,6 +335,8 @@ class PCA(_BasePCA):
         X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         Returns
         -------
@@ -549,6 +551,8 @@ class PCA(_BasePCA):
         ----------
         X : array, shape(n_samples, n_features)
             The data.
+
+        y : Ignored
 
         Returns
         -------
